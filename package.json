@@ -1,0 +1,11 @@
+{
+  "name": "scrapinvest",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "prestart": "npm --prefix frontend install",
+    "start": "npm --prefix frontend start",
+    "build": "npm --prefix frontend run build",
+    "install:frontend": "npm --prefix frontend install"
+  }
+}

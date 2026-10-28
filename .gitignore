@@ -1,0 +1,8 @@
+.idea/
+target/
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+**/application-local.properties
+.env
