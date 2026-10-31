@@ -14,25 +14,25 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
   template: `
     <div class="space-y-8">
       <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-5">
+        <div class="lg:col-span-7 bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between space-y-5 transition-colors">
           <div class="space-y-3">
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-semibold uppercase tracking-wider">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-ferrugem-50 dark:bg-ferrugem-950/40 border border-ferrugem-200 dark:border-ferrugem-800 text-ferrugem text-[11px] font-semibold uppercase tracking-wider">
               Fonte: Fundamentus • B3
             </div>
 
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Consulta Fundamentalista e Acompanhamento de Ativos
             </h1>
 
-            <p class="text-sm text-slate-600 leading-relaxed">
-              Consulte papéis individualmente ou <span class="font-semibold text-slate-700">concatene múltiplos tickers</span> para comparar indicadores fundamentalistas lado a lado em formato de planilha.
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Consulte papéis individualmente ou <span class="font-semibold text-slate-800 dark:text-slate-200">concatene múltiplos tickers</span> para comparar indicadores fundamentalistas lado a lado em formato de planilha.
             </p>
           </div>
 
           <div class="space-y-3">
             <form (ngSubmit)="handleSearch()" class="flex flex-col sm:flex-row gap-2">
               <div class="relative flex-1">
-                <span class="material-icons text-slate-400 text-base absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <span class="material-icons text-slate-400 dark:text-slate-500 text-base absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                   search
                 </span>
                 <input
@@ -40,14 +40,14 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                   [(ngModel)]="searchQuery"
                   name="searchQuery"
                   placeholder="Ex: PETR4 ou múltiplos: PETR4, VALE3, BBAS3, MGLU3..."
-                  class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-600 rounded-lg pl-9 pr-3.5 py-2.5 text-sm text-slate-900 font-mono uppercase placeholder-slate-400 outline-none transition"
+                  class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-ferrugem dark:focus:border-ferrugem rounded-lg pl-9 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 font-mono uppercase placeholder-slate-400 dark:placeholder-slate-500 outline-none transition"
                 />
               </div>
 
               <div class="flex items-center gap-2 shrink-0">
                 <button
                   type="submit"
-                  class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition shadow-sm"
+                  class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg bg-ferrugem hover:bg-ferrugem-700 text-xs font-semibold text-white transition shadow-xs"
                   title="Consultar papel individual ou comparar lista"
                 >
                   Consultar
@@ -55,7 +55,7 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                 <button
                   type="button"
                   (click)="handleCompare()"
-                  class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold transition flex items-center justify-center gap-1.5"
+                  class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-lg bg-ferrugem-50 dark:bg-ferrugem-950/40 hover:bg-ferrugem-100 dark:hover:bg-ferrugem-900/50 text-ferrugem border border-ferrugem-200 dark:border-ferrugem-800 text-xs font-semibold transition flex items-center justify-center gap-1.5"
                   title="Concatenar na planilha comparativa"
                 >
                   <span class="material-icons text-sm">compare_arrows</span>
@@ -65,12 +65,12 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
             </form>
 
             <div class="flex flex-wrap items-center gap-1.5 pt-1">
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mr-1">Atalhos B3:</span>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">Atalhos B3:</span>
               @for (stock of highlights(); track stock.ticker) {
                 <button
                   type="button"
                   (click)="appendTicker(stock.ticker)"
-                  class="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[11px] font-mono font-bold tracking-tight text-slate-700 transition"
+                  class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-[11px] font-mono font-bold tracking-tight text-slate-700 dark:text-slate-300 transition"
                   title="Adicionar à busca"
                 >
                   +{{ stock.ticker }}
@@ -82,19 +82,19 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
 
         <div class="lg:col-span-5">
           @if (portfolio(); as p) {
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm h-full flex flex-col justify-between space-y-5">
+            <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm h-full flex flex-col justify-between space-y-5 transition-colors">
               <div class="flex items-start justify-between">
                 <div>
-                  <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Patrimônio Consolidado</p>
-                  <p class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums mt-1">
+                  <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Patrimônio Consolidado</p>
+                  <p class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tabular-nums mt-1">
                     {{ p.patrimonioAtualizadoTotal | currency:'BRL' }}
                   </p>
                 </div>
                 <span
                   class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold tabular-nums border"
                   [ngClass]="p.rentabilidadePercentualTotal >= 0
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : 'bg-rose-50 text-rose-700 border-rose-200'"
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800'"
                 >
                   <span class="material-icons text-base leading-none -ml-1">
                     {{ p.rentabilidadePercentualTotal >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}
@@ -103,31 +103,31 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                 </span>
               </div>
 
-              <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200">
-                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Valor Investido</p>
-                  <p class="text-sm font-bold text-slate-900 tabular-nums mt-1">
+              <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Valor Investido</p>
+                  <p class="text-sm font-bold text-slate-900 dark:text-slate-100 tabular-nums mt-1">
                     {{ p.patrimonioInvestidoTotal | currency:'BRL' }}
                   </p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Resultado Acumulado</p>
+                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Resultado Acumulado</p>
                   <p
                     class="text-sm font-bold tabular-nums mt-1"
-                    [ngClass]="p.lucroPrejuizoTotal >= 0 ? 'text-emerald-600' : 'text-rose-600'"
+                    [ngClass]="p.lucroPrejuizoTotal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
                   >
                     {{ p.lucroPrejuizoTotal >= 0 ? '+' : '' }}{{ p.lucroPrejuizoTotal | currency:'BRL' }}
                   </p>
                 </div>
               </div>
 
-              <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                <span class="text-xs text-slate-500">
-                  <strong class="text-slate-900 tabular-nums">{{ p.posicoes.length }}</strong> posições em custódia
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span class="text-xs text-slate-500 dark:text-slate-400">
+                  <strong class="text-slate-900 dark:text-slate-100 tabular-nums">{{ p.posicoes.length }}</strong> posições em custódia
                 </span>
                 <a
                   routerLink="/portfolio"
-                  class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition"
+                  class="px-4 py-2 rounded-lg bg-ferrugem hover:bg-ferrugem-700 text-xs font-semibold text-white transition shadow-xs"
                 >
                   Abrir Carteira &rarr;
                 </a>
@@ -139,14 +139,14 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
 
       <!-- Seção da Planilha Comparativa Concatenada -->
       @if (api.comparisonTickers().length > 0 || api.isLoadingComparison()) {
-        <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-0">
-          <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <section class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden space-y-0 transition-colors">
+          <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                <h3 class="text-base font-bold text-slate-900">Planilha Comparativa de Consultas Concatenadas</h3>
+                <span class="w-2.5 h-2.5 rounded-full bg-ferrugem animate-pulse"></span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Planilha Comparativa de Consultas Concatenadas</h3>
               </div>
-              <p class="text-xs text-slate-500">Compare múltiplos do Fundamentus em lote. Clique nas colunas para ordenar.</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Compare múltiplos do Fundamentus em lote. Clique nas colunas para ordenar.</p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -154,14 +154,14 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                 type="button"
                 (click)="api.refreshComparison()"
                 [disabled]="api.isLoadingComparison()"
-                class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 transition disabled:opacity-50"
+                class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition disabled:opacity-50"
               >
-                {{ api.isLoadingComparison() ? 'Coletando no Fundamentus...' : '↻ Re-coletar Dados' }}
+                {{ api.isLoadingComparison() ? 'Coletando...' : '↻ Re-coletar Dados' }}
               </button>
               <button
                 type="button"
                 (click)="api.clearComparison()"
-                class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition"
+                class="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-semibold transition"
               >
                 Limpar Comparação
               </button>
@@ -169,15 +169,15 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
           </div>
 
           <!-- Chips com os papéis concatenados -->
-          <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-2">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mr-1">Papéis Concatenados:</span>
+          <div class="px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-2">
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">Papéis Concatenados:</span>
             @for (t of api.comparisonTickers(); track t) {
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-slate-900 shadow-xs">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-ferrugem border border-slate-200 dark:border-ferrugem-700 text-xs font-mono font-bold text-slate-900 dark:text-white shadow-xs">
                 {{ t }}
                 <button
                   type="button"
                   (click)="api.removeTickerFromComparison(t)"
-                  class="text-slate-400 hover:text-rose-600 transition"
+                  class="text-slate-400 dark:text-ferrugem-200 hover:text-rose-600 dark:hover:text-white transition"
                   title="Remover"
                 >
                   &times;
@@ -187,100 +187,100 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
           </div>
 
           @if (api.isLoadingComparison() && api.comparedStocks().length === 0) {
-            <div class="p-8 text-center text-xs text-slate-500 animate-pulse">
+            <div class="p-8 text-center text-xs text-slate-500 dark:text-slate-400 animate-pulse">
               Consultando dados no Fundamentus para os tickers selecionados...
             </div>
           } @else if (sortedComparedStocks().length > 0) {
             <div class="overflow-x-auto">
               <table class="w-full border-collapse text-xs">
                 <thead>
-                  <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider select-none">
-                    <th (click)="setCompareSort('TICKER', true)" class="py-3 px-3.5 text-left cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                  <tr class="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider select-none">
+                    <th (click)="setCompareSort('TICKER', true)" class="py-3 px-3.5 text-left cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       Papel {{ compareSortCol() === 'TICKER' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('COTACAO', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('COTACAO', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       Cotação {{ compareSortCol() === 'COTACAO' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('VAR_DIA', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('VAR_DIA', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       Dia {{ compareSortCol() === 'VAR_DIA' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('PL', true)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('PL', true)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       P/L {{ compareSortCol() === 'PL' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('PVP', true)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('PVP', true)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       P/VP {{ compareSortCol() === 'PVP' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('DY', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('DY', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       DY {{ compareSortCol() === 'DY' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('ROE', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('ROE', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       ROE {{ compareSortCol() === 'ROE' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('MARGEM', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('MARGEM', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       Marg. Líq {{ compareSortCol() === 'MARGEM' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('EV_EBITDA', true)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('EV_EBITDA', true)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       EV/EBITDA {{ compareSortCol() === 'EV_EBITDA' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('ROIC', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('ROIC', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       ROIC {{ compareSortCol() === 'ROIC' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
-                    <th (click)="setCompareSort('LIQ_CORR', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 border-r border-slate-200">
+                    <th (click)="setCompareSort('LIQ_CORR', false)" class="py-3 px-3.5 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white border-r border-slate-200 dark:border-slate-700">
                       Liq. Corr {{ compareSortCol() === 'LIQ_CORR' ? (compareSortAsc() ? '↑' : '↓') : '' }}
                     </th>
                     <th class="py-3 px-3.5 text-center">Ações</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 tabular-nums">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 tabular-nums">
                   @for (s of sortedComparedStocks(); track s.ticker) {
-                    <tr class="hover:bg-slate-50/80 transition-colors">
-                      <td class="py-2.5 px-3.5 text-left border-r border-slate-200">
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                      <td class="py-2.5 px-3.5 text-left border-r border-slate-200 dark:border-slate-700">
                         <div class="flex items-center gap-2">
-                          <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-mono font-bold tracking-tight text-xs">
+                          <span class="px-2 py-0.5 rounded-md bg-slate-900 dark:bg-ferrugem text-white font-mono font-bold tracking-tight text-xs shadow-xs">
                             {{ s.ticker }}
                           </span>
-                          <span class="text-[11px] text-slate-600 truncate max-w-[120px]">{{ s.nomeEmpresa }}</span>
+                          <span class="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-[120px]">{{ s.nomeEmpresa }}</span>
                         </div>
                       </td>
-                      <td class="py-2.5 px-3.5 text-right font-bold text-slate-900 border-r border-slate-200">
+                      <td class="py-2.5 px-3.5 text-right font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700">
                         {{ s.cotacaoAtual | currency:'BRL' }}
                       </td>
-                      <td class="py-2.5 px-3.5 text-right border-r border-slate-200 font-semibold"
-                          [ngClass]="s.variacaoDiaria >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                      <td class="py-2.5 px-3.5 text-right border-r border-slate-200 dark:border-slate-700 font-semibold"
+                          [ngClass]="s.variacaoDiaria >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
                         {{ s.variacaoDiaria >= 0 ? '+' : '' }}{{ s.variacaoDiaria | number:'1.2-2' }}%
                       </td>
-                      <td class="py-2.5 px-3.5 text-right text-slate-700 font-mono border-r border-slate-200">
+                      <td class="py-2.5 px-3.5 text-right text-slate-700 dark:text-slate-300 font-mono border-r border-slate-200 dark:border-slate-700">
                         {{ s.pl | number:'1.2-2' }}
                       </td>
-                      <td class="py-2.5 px-3.5 text-right font-mono border-r border-slate-200"
-                          [ngClass]="s.pvp < 1.0 ? 'text-emerald-600 font-bold' : 'text-slate-700'">
+                      <td class="py-2.5 px-3.5 text-right font-mono border-r border-slate-200 dark:border-slate-700"
+                          [ngClass]="s.pvp < 1.0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-700 dark:text-slate-300'">
                         {{ s.pvp | number:'1.2-2' }}
                       </td>
-                      <td class="py-2.5 px-3.5 text-right font-bold text-emerald-600 border-r border-slate-200">
+                      <td class="py-2.5 px-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
                         {{ s.dividendYield | number:'1.2-2' }}%
                       </td>
-                      <td class="py-2.5 px-3.5 text-right font-semibold border-r border-slate-200"
-                          [ngClass]="s.roe < 0 ? 'text-rose-600' : 'text-slate-900'">
+                      <td class="py-2.5 px-3.5 text-right font-semibold border-r border-slate-200 dark:border-slate-700"
+                          [ngClass]="s.roe < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'">
                         {{ s.roe | number:'1.2-2' }}%
                       </td>
-                      <td class="py-2.5 px-3.5 text-right border-r border-slate-200"
-                          [ngClass]="s.margemLiquida < 0 ? 'text-rose-600' : 'text-slate-700'">
+                      <td class="py-2.5 px-3.5 text-right border-r border-slate-200 dark:border-slate-700"
+                          [ngClass]="s.margemLiquida < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'">
                         {{ s.margemLiquida | number:'1.2-2' }}%
                       </td>
-                      <td class="py-2.5 px-3.5 text-right text-slate-700 font-mono border-r border-slate-200">
+                      <td class="py-2.5 px-3.5 text-right text-slate-700 dark:text-slate-300 font-mono border-r border-slate-200 dark:border-slate-700">
                         {{ s.indicadores?.['EV / EBITDA'] || '-' }}
                       </td>
-                      <td class="py-2.5 px-3.5 text-right font-semibold border-r border-slate-200"
-                          [ngClass]="(s.indicadores?.['ROIC'] || '').startsWith('-') ? 'text-rose-600' : 'text-slate-900'">
+                      <td class="py-2.5 px-3.5 text-right font-semibold border-r border-slate-200 dark:border-slate-700"
+                          [ngClass]="(s.indicadores?.['ROIC'] || '').startsWith('-') ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'">
                         {{ s.indicadores?.['ROIC'] || '-' }}
                       </td>
-                      <td class="py-2.5 px-3.5 text-right text-slate-700 font-mono border-r border-slate-200">
+                      <td class="py-2.5 px-3.5 text-right text-slate-700 dark:text-slate-300 font-mono border-r border-slate-200 dark:border-slate-700">
                         {{ s.indicadores?.['Liquidez Corr'] || '-' }}
                       </td>
                       <td class="py-2.5 px-3.5 text-center">
                         <a
                           [routerLink]="['/stocks', s.ticker]"
-                          class="px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold transition"
+                          class="px-2.5 py-1 rounded-md bg-ferrugem-50 dark:bg-ferrugem-950/40 hover:bg-ferrugem-100 dark:hover:bg-ferrugem-900/50 text-ferrugem border border-ferrugem-200 dark:border-ferrugem-800 text-xs font-semibold transition"
                         >
                           Ver Planilha &rarr;
                         </a>
@@ -299,14 +299,14 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <div>
-              <h2 class="text-lg font-bold text-slate-900">Painel de Indicadores Fundamentalistas</h2>
-              <p class="text-xs text-slate-500">Dados coletados diretamente do Fundamentus</p>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Painel de Indicadores Fundamentalistas</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Dados coletados diretamente do Fundamentus</p>
             </div>
             <button
               type="button"
               (click)="refreshAllScrapedStocks()"
               [disabled]="refreshingAll()"
-              class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 transition disabled:opacity-50"
+              class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition disabled:opacity-50"
             >
               {{ refreshingAll() ? 'Atualizando...' : '↻ Atualizar Dados' }}
             </button>
@@ -318,8 +318,8 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
               (click)="setSort('DY', false)"
               class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
               [ngClass]="sortField() === 'DY'
-                ? 'bg-blue-50 border-blue-200 text-blue-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                ? 'bg-ferrugem-50 dark:bg-ferrugem-950/40 border-ferrugem-200 dark:border-ferrugem-800 text-ferrugem'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'"
             >
               Dividend Yield {{ sortField() === 'DY' ? (sortAsc() ? '↑' : '↓') : '' }}
             </button>
@@ -328,8 +328,8 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
               (click)="setSort('PL', true)"
               class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
               [ngClass]="sortField() === 'PL'
-                ? 'bg-blue-50 border-blue-200 text-blue-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                ? 'bg-ferrugem-50 dark:bg-ferrugem-950/40 border-ferrugem-200 dark:border-ferrugem-800 text-ferrugem'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'"
             >
               P/L {{ sortField() === 'PL' ? (sortAsc() ? '↑' : '↓') : '' }}
             </button>
@@ -338,8 +338,8 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
               (click)="setSort('PVP', true)"
               class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
               [ngClass]="sortField() === 'PVP'
-                ? 'bg-blue-50 border-blue-200 text-blue-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                ? 'bg-ferrugem-50 dark:bg-ferrugem-950/40 border-ferrugem-200 dark:border-ferrugem-800 text-ferrugem'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'"
             >
               P/VP {{ sortField() === 'PVP' ? (sortAsc() ? '↑' : '↓') : '' }}
             </button>
@@ -348,8 +348,8 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
               (click)="setSort('ROE', false)"
               class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
               [ngClass]="sortField() === 'ROE'
-                ? 'bg-blue-50 border-blue-200 text-blue-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                ? 'bg-ferrugem-50 dark:bg-ferrugem-950/40 border-ferrugem-200 dark:border-ferrugem-800 text-ferrugem'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'"
             >
               ROE {{ sortField() === 'ROE' ? (sortAsc() ? '↑' : '↓') : '' }}
             </button>
@@ -358,8 +358,8 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
               (click)="setSort('MARGEM', false)"
               class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition"
               [ngClass]="sortField() === 'MARGEM'
-                ? 'bg-blue-50 border-blue-200 text-blue-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
+                ? 'bg-ferrugem-50 dark:bg-ferrugem-950/40 border-ferrugem-200 dark:border-ferrugem-800 text-ferrugem'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'"
             >
               Margem Líquida {{ sortField() === 'MARGEM' ? (sortAsc() ? '↑' : '↓') : '' }}
             </button>
@@ -370,31 +370,31 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
           @for (stock of sortedHighlights(); track stock.ticker) {
             <a
               [routerLink]="['/stocks', stock.ticker]"
-              class="group bg-white rounded-xl border border-slate-200 hover:border-blue-600 p-5 shadow-sm transition flex flex-col justify-between space-y-4"
+              class="group bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 hover:border-ferrugem dark:hover:border-ferrugem p-5 shadow-sm transition flex flex-col justify-between space-y-4"
             >
               <div class="space-y-3">
                 <div class="flex items-start justify-between gap-2">
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                      <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-mono font-bold tracking-tight text-sm">
+                      <span class="px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-ferrugem text-white font-mono font-bold tracking-tight text-sm shadow-xs">
                         {{ stock.ticker }}
                       </span>
-                      <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium truncate max-w-[140px]">
+                      <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-medium truncate max-w-[140px]">
                         {{ stock.setor }}
                       </span>
                     </div>
-                    <p class="text-xs text-slate-500 font-medium truncate max-w-[210px]">{{ stock.nomeEmpresa }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium truncate max-w-[210px]">{{ stock.nomeEmpresa }}</p>
                   </div>
 
                   <div class="text-right tabular-nums">
-                    <p class="text-lg font-bold text-slate-900">
+                    <p class="text-lg font-bold text-slate-900 dark:text-slate-100">
                       {{ stock.cotacaoAtual | currency:'BRL' }}
                     </p>
                     <span
                       class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] font-semibold border"
                       [ngClass]="stock.variacaoDiaria >= 0
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-rose-50 text-rose-700 border-rose-200'"
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                        : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800'"
                     >
                       <span class="material-icons text-sm leading-none -ml-0.5">
                         {{ stock.variacaoDiaria >= 0 ? 'arrow_drop_up' : 'arrow_drop_down' }}
@@ -404,35 +404,35 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                   </div>
                 </div>
 
-                <div class="grid grid-cols-5 gap-1.5 pt-3 border-t border-slate-200 text-center tabular-nums">
-                  <div class="p-2 rounded-lg border bg-slate-50 border-slate-200/70">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">P/L</p>
-                    <p class="text-xs font-bold text-slate-900 mt-0.5">{{ stock.pl | number:'1.2-2' }}</p>
+                <div class="grid grid-cols-5 gap-1.5 pt-3 border-t border-slate-200 dark:border-slate-800 text-center tabular-nums">
+                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/L</p>
+                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.pl | number:'1.2-2' }}</p>
                   </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 border-slate-200/70">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">P/VP</p>
-                    <p class="text-xs font-bold text-slate-900 mt-0.5">{{ stock.pvp | number:'1.2-2' }}</p>
+                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/VP</p>
+                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.pvp | number:'1.2-2' }}</p>
                   </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 border-slate-200/70">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">DY</p>
-                    <p class="text-xs font-bold text-emerald-600 mt-0.5">{{ stock.dividendYield | number:'1.1-1' }}%</p>
+                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">DY</p>
+                    <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ stock.dividendYield | number:'1.1-1' }}%</p>
                   </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 border-slate-200/70">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">ROE</p>
-                    <p class="text-xs font-bold text-slate-900 mt-0.5">{{ stock.roe | number:'1.1-1' }}%</p>
+                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">ROE</p>
+                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.roe | number:'1.1-1' }}%</p>
                   </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 border-slate-200/70">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">M. Líq</p>
-                    <p class="text-xs font-bold text-slate-900 mt-0.5">{{ stock.margemLiquida | number:'1.1-1' }}%</p>
+                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">M. Líq</p>
+                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.margemLiquida | number:'1.1-1' }}%</p>
                   </div>
                 </div>
               </div>
 
-              <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
                 <span class="tabular-nums">
                   Coletado em {{ stock.dataAtualizacao | date:'dd/MM/yyyy HH:mm' }}
                 </span>
-                <span class="text-blue-600 font-semibold group-hover:underline">Ver Planilha &rarr;</span>
+                <span class="text-ferrugem font-semibold group-hover:underline">Ver Planilha &rarr;</span>
               </div>
             </a>
           }

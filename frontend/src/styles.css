@@ -7,6 +7,12 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: #F8F9FA;
     color: #0F172A;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  html.dark body {
+    background-color: #121212;
+    color: #F5F5F5;
   }
 
   .font-mono {
