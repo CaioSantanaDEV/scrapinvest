@@ -109,7 +109,7 @@ import {
 
         <!-- Planilhas Completas do Fundamentus -->
         @if (s.tabelasFundamentus && s.tabelasFundamentus.length > 0) {
-          <div class="space-y-5">
+          <div class="space-y-4">
             <div class="flex items-center justify-between">
               <div>
                 <h2 class="text-base font-bold text-slate-900">Planilha Completa de Dados (Fundamentus)</h2>
@@ -118,51 +118,57 @@ import {
               <span class="text-[11px] font-mono text-slate-400">Fonte: fundamentus.com.br</span>
             </div>
 
-            @for (tbl of s.tabelasFundamentus; track tbl.titulo) {
-              <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-4 py-2.5 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
-                  <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-sm bg-blue-600"></span>
-                    {{ tbl.titulo }}
-                  </h3>
-                </div>
-                <div class="overflow-x-auto">
-                  <table class="w-full border-collapse text-xs">
-                    <tbody>
-                      @for (row of tbl.rows; track $index) {
-                        <tr class="border-b border-slate-200/80 hover:bg-slate-50/70 transition-colors">
-                          @for (cell of row.cells; track $index) {
-                            @if (cell.header) {
-                              <th
-                                [attr.colspan]="cell.colSpan > 1 ? cell.colSpan : null"
-                                class="py-2.5 px-3 bg-slate-100 font-bold text-slate-700 text-left uppercase text-[10px] tracking-wider border-r border-slate-200"
-                              >
-                                {{ cell.text }}
-                              </th>
-                            } @else if (cell.label) {
-                              <td
-                                [attr.colspan]="cell.colSpan > 1 ? cell.colSpan : null"
-                                class="py-2 px-3 bg-slate-50/80 font-medium text-slate-600 border-r border-slate-200 whitespace-nowrap"
-                              >
-                                {{ cell.text }}
-                              </td>
-                            } @else {
-                              <td
-                                [attr.colspan]="cell.colSpan > 1 ? cell.colSpan : null"
-                                class="py-2 px-3 font-mono border-r border-slate-200 tabular-nums whitespace-nowrap"
-                                [ngClass]="formatValueClass(cell.text)"
-                              >
-                                {{ cell.text }}
-                              </td>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+              @for (tbl of s.tabelasFundamentus; track tbl.titulo) {
+                <div
+                  class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full"
+                  [ngClass]="isWideTable(tbl) ? 'lg:col-span-2' : 'col-span-1'"
+                >
+                  <div class="px-4 py-2.5 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-sm bg-blue-600"></span>
+                      {{ tbl.titulo }}
+                    </h3>
+                  </div>
+                  <div class="overflow-x-auto flex-1">
+                    <table class="w-full border-collapse text-xs">
+                      <tbody>
+                        @for (row of tbl.rows; track $index) {
+                          <tr class="border-b border-slate-200/80 hover:bg-slate-50/70 transition-colors">
+                            @for (cell of row.cells; track $index) {
+                              @if (cell.header) {
+                                <th
+                                  [attr.colspan]="cell.colSpan > 1 ? cell.colSpan : null"
+                                  class="py-2 px-3 bg-slate-100 font-bold text-slate-700 text-left uppercase text-[10px] tracking-wider border-r border-slate-200"
+                                >
+                                  {{ cell.text }}
+                                </th>
+                              } @else if (cell.label) {
+                                <td
+                                  [attr.colspan]="cell.colSpan > 1 ? cell.colSpan : null"
+                                  class="py-1.5 px-3 bg-slate-50/90 font-medium text-slate-600 border-r border-slate-200 whitespace-nowrap text-[11px]"
+                                  [ngClass]="isWideTable(tbl) ? 'w-[16%]' : 'w-[28%] max-w-[180px]'"
+                                >
+                                  {{ cell.text }}
+                                </td>
+                              } @else {
+                                <td
+                                  [attr.colspan]="cell.colSpan > 1 ? cell.colSpan : null"
+                                  class="py-1.5 px-3 font-mono border-r border-slate-200 tabular-nums whitespace-nowrap text-xs"
+                                  [ngClass]="formatValueClass(cell.text)"
+                                >
+                                  {{ cell.text }}
+                                </td>
+                              }
                             }
-                          }
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            }
+              }
+            </div>
           </div>
         } @else {
           <!-- Fallback Cards de Indicadores Básicos -->
@@ -433,6 +439,12 @@ export class StockDetailComponent implements OnInit {
       },
       error: () => this.refreshing.set(false),
     });
+  }
+
+  isWideTable(tbl: any): boolean {
+    if (!tbl || !tbl.titulo) return false;
+    const title = tbl.titulo.toLowerCase();
+    return title.includes('oscilações') || title.includes('fundamentalistas');
   }
 
   formatValueClass(text: string): string {
