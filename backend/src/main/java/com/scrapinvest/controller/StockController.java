@@ -27,6 +27,11 @@ public class StockController {
         return ResponseEntity.ok(portfolioService.listMarketHighlights());
     }
 
+    @GetMapping("/compare")
+    public ResponseEntity<List<StockDetailResponse>> compareStocks(@RequestParam List<String> tickers) {
+        return ResponseEntity.ok(scraperEngine.getOrScrapeMultipleStocks(tickers));
+    }
+
     @GetMapping("/{ticker}")
     public ResponseEntity<StockDetailResponse> getStockDetails(@PathVariable String ticker) {
         return ResponseEntity.ok(scraperEngine.getOrScrapeStock(ticker));

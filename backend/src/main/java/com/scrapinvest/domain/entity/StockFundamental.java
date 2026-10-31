@@ -32,6 +32,9 @@ public class StockFundamental {
     @Column(name = "margem_liquida", precision = 12, scale = 4)
     private BigDecimal margemLiquida;
 
+    @Column(name = "dados_fundamentus", columnDefinition = "TEXT")
+    private String dadosFundamentus;
+
     @Column(name = "data_atualizacao", nullable = false)
     private OffsetDateTime dataAtualizacao = OffsetDateTime.now();
 
@@ -96,6 +99,14 @@ public class StockFundamental {
 
     public void setMargemLiquida(BigDecimal margemLiquida) {
         this.margemLiquida = margemLiquida;
+    }
+
+    public String getDadosFundamentus() {
+        return dadosFundamentus;
+    }
+
+    public void setDadosFundamentus(String dadosFundamentus) {
+        this.dadosFundamentus = dadosFundamentus;
     }
 
     public OffsetDateTime getDataAtualizacao() {

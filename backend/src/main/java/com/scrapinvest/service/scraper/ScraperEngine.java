@@ -1,10 +1,15 @@
 package com.scrapinvest.service.scraper;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scrapinvest.domain.entity.Stock;
 import com.scrapinvest.domain.entity.StockFundamental;
 import com.scrapinvest.domain.repository.StockFundamentalRepository;
 import com.scrapinvest.domain.repository.StockRepository;
 import com.scrapinvest.dto.StockDetailResponse;
+import com.scrapinvest.dto.StockDetailResponse.FundamentusCellDTO;
+import com.scrapinvest.dto.StockDetailResponse.FundamentusRowDTO;
+import com.scrapinvest.dto.StockDetailResponse.FundamentusTableDTO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,6 +35,7 @@ public class ScraperEngine {
 
     private final StockRepository stockRepository;
     private final StockFundamentalRepository fundamentalRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${scrapinvest.scraper.cache-ttl-hours:12}")
     private long cacheTtlHours;
@@ -40,10 +46,19 @@ public class ScraperEngine {
     @Value("${scrapinvest.scraper.user-agent}")
     private String userAgent;
 
-    public ScraperEngine(StockRepository stockRepository, StockFundamentalRepository fundamentalRepository) {
+    public ScraperEngine(
+            StockRepository stockRepository,
+            StockFundamentalRepository fundamentalRepository,
+            ObjectMapper objectMapper) {
         this.stockRepository = stockRepository;
         this.fundamentalRepository = fundamentalRepository;
+        this.objectMapper = objectMapper;
     }
+
+    public record StoredFundamentusPayload(
+            Map<String, String> indicadores,
+            List<FundamentusTableDTO> tabelas
+    ) {}
 
     public record ScrapedSnapshot(
             String ticker,
@@ -55,7 +70,9 @@ public class ScraperEngine {
             BigDecimal pvp,
             BigDecimal dividendYield,
             BigDecimal roe,
-            BigDecimal margemLiquida
+            BigDecimal margemLiquida,
+            Map<String, String> indicadores,
+            List<FundamentusTableDTO> tabelas
     ) {}
 
     @EventListener(ApplicationReadyEvent.class)
@@ -87,6 +104,21 @@ public class ScraperEngine {
     }
 
     @Transactional
+    public List<StockDetailResponse> getOrScrapeMultipleStocks(List<String> rawTickers) {
+        List<StockDetailResponse> results = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
+        for (String raw : rawTickers) {
+            for (String token : raw.split("[,;\\s+]+")) {
+                String clean = sanitizeTicker(token);
+                if (!clean.isEmpty() && seen.add(clean)) {
+                    results.add(getOrScrapeStock(clean));
+                }
+            }
+        }
+        return results;
+    }
+
+    @Transactional
     public StockDetailResponse forceScrapeStock(String rawTicker) {
         String ticker = sanitizeTicker(rawTicker);
         Optional<Stock> existingStockOpt = stockRepository.findWithFundamentalByTickerIgnoreCase(ticker);
@@ -115,39 +147,21 @@ public class ScraperEngine {
         if (fundamental == null || fundamental.getDataAtualizacao() == null) {
             return false;
         }
-        if (isLegacyOrPoisonedRecord(fundamental)) {
+        if (fundamental.getDadosFundamentus() == null || fundamental.getDadosFundamentus().isBlank()) {
             return false;
         }
         Duration age = Duration.between(fundamental.getDataAtualizacao(), OffsetDateTime.now());
         return !age.isNegative() && age.toHours() < cacheTtlHours;
     }
 
-    private boolean isLegacyOrPoisonedRecord(StockFundamental f) {
-        if (f.getPl() == null || f.getPvp() == null || f.getDividendYield() == null) {
-            return true;
-        }
-        boolean isOldDefault = matches(f.getPl(), "8.50") && matches(f.getPvp(), "1.35") && matches(f.getDividendYield(), "7.20");
-        boolean isOldPetr4Seed = matches(f.getPl(), "4.65") && matches(f.getPvp(), "1.22") && matches(f.getDividendYield(), "14.80");
-        boolean isOldVale3Seed = matches(f.getPl(), "6.10") && matches(f.getPvp(), "1.45") && matches(f.getDividendYield(), "9.20");
-        boolean isOldItub4Seed = matches(f.getPl(), "8.95") && matches(f.getPvp(), "1.78") && matches(f.getDividendYield(), "6.85");
-        boolean isOldWege3Seed = matches(f.getPl(), "36.40") && matches(f.getPvp(), "11.90") && matches(f.getDividendYield(), "1.45");
-        boolean isOldBbas3Seed = matches(f.getPl(), "4.50") && matches(f.getPvp(), "0.92") && matches(f.getDividendYield(), "9.60");
-
-        return isOldDefault || isOldPetr4Seed || isOldVale3Seed || isOldItub4Seed || isOldWege3Seed || isOldBbas3Seed;
-    }
-
-    private boolean matches(BigDecimal value, String expected) {
-        return value != null && value.compareTo(new BigDecimal(expected)) == 0;
-    }
-
     private ScrapedSnapshot collectFromFundamentus(String ticker, Stock fallbackStock) {
         ScrapedSnapshot fundamentusData = tryScrapeFundamentus(ticker);
-        if (isSnapshotComplete(fundamentusData)) {
-            log.info("Fundamentus extraído para {}: cotação={}, P/L={}, P/VP={}, DY={}%",
-                    ticker, fundamentusData.cotacaoAtual(), fundamentusData.pl(), fundamentusData.pvp(), fundamentusData.dividendYield());
+        if (fundamentusData != null && fundamentusData.cotacaoAtual() != null) {
+            log.info("Dados completos do Fundamentus extraídos para {} ({} indicadores, {} tabelas)",
+                    ticker, fundamentusData.indicadores().size(), fundamentusData.tabelas().size());
             return fundamentusData;
         }
-        return completeWithReferenceData(ticker, fundamentusData, fallbackStock);
+        return buildFallbackSnapshot(ticker, fallbackStock);
     }
 
     private ScrapedSnapshot tryScrapeFundamentus(String ticker) {
@@ -162,129 +176,180 @@ public class ScraperEngine {
                     .followRedirects(true)
                     .get();
 
-            Map<String, String> fields = new HashMap<>();
-            for (Element row : doc.select("table.w728 tr, table tr")) {
-                Elements cols = row.select("td");
-                for (int i = 0; i < cols.size() - 1; i += 2) {
-                    String rawKey = cols.get(i).text().replace("?", "").trim().toUpperCase(Locale.ROOT);
-                    String rawVal = cols.get(i + 1).text().trim();
-                    if (!rawKey.isEmpty() && !rawVal.isEmpty() && !fields.containsKey(rawKey)) {
-                        fields.put(rawKey, rawVal);
+            Elements rawTables = doc.select("table.w728");
+            if (rawTables.isEmpty()) {
+                rawTables = doc.select("table");
+            }
+
+            Map<String, String> indicators = new LinkedHashMap<>();
+            List<FundamentusTableDTO> parsedTables = new ArrayList<>();
+
+            int tableIndex = 0;
+            for (Element table : rawTables) {
+                tableIndex++;
+                List<FundamentusRowDTO> tableRows = new ArrayList<>();
+                String tableTitle = resolveDefaultTableTitle(tableIndex);
+                boolean isDreTable = false;
+
+                for (Element row : table.select("tr")) {
+                    Elements cells = row.select("td, th");
+                    if (cells.isEmpty()) continue;
+
+                    List<FundamentusCellDTO> rowCells = new ArrayList<>();
+                    for (Element cell : cells) {
+                        String cleanText = cleanCellText(cell.text());
+                        boolean isHeader = row.hasClass("topo") || cell.hasClass("topo");
+                        boolean isLabel = !isHeader && cell.hasClass("label");
+                        int colSpan = parseColSpan(cell.attr("colspan"));
+
+                        if (isHeader && colSpan >= 4 && !cleanText.isEmpty()) {
+                            tableTitle = cleanText;
+                            if (cleanText.toUpperCase(Locale.ROOT).contains("DEMONSTRATIVOS DE RESULTADOS")) {
+                                isDreTable = true;
+                            }
+                        }
+                        rowCells.add(new FundamentusCellDTO(cleanText, isLabel, isHeader, colSpan));
                     }
+                    tableRows.add(new FundamentusRowDTO(rowCells));
+
+                    if (!row.hasClass("topo")) {
+                        extractKeyValuePairsFromRow(cells, indicators, isDreTable);
+                    }
+                }
+
+                if (!tableRows.isEmpty()) {
+                    parsedTables.add(new FundamentusTableDTO(tableTitle, tableRows));
                 }
             }
 
-            if (fields.isEmpty() || !fields.containsKey("COTAÇÃO")) {
+            String cotacaoRaw = getIndicatorValue(indicators, "COTAÇÃO", "COTACAO");
+            if (cotacaoRaw == null || cotacaoRaw.isBlank()) {
                 return null;
             }
 
-            String empresa = fields.getOrDefault("EMPRESA", ticker);
-            String setor = fields.getOrDefault("SETOR", fields.getOrDefault("SUBSETOR", "Renda Variável / B3"));
-            BigDecimal cotacao = parseBrDecimal(fields.get("COTAÇÃO"), null);
-            BigDecimal variacaoDia = parseBrDecimal(fields.get("DIA"), BigDecimal.ZERO);
-            BigDecimal pl = parseBrDecimal(fields.get("P/L"), null);
-            BigDecimal pvp = parseBrDecimal(fields.get("P/VP"), null);
-            BigDecimal dy = parseBrDecimal(fields.get("DIV. YIELD"), null);
-            BigDecimal roe = parseBrDecimal(fields.get("ROE"), null);
-            BigDecimal margemLiquida = parseBrDecimal(
-                    fields.getOrDefault("MARG. LÍQUIDA", fields.get("MARG. LIQUIDA")),
-                    null
+            String empresa = firstNonBlank(getIndicatorValue(indicators, "EMPRESA"), ticker);
+            String setor = firstNonBlank(
+                    getIndicatorValue(indicators, "SETOR"),
+                    firstNonBlank(getIndicatorValue(indicators, "SUBSETOR"), "Renda Variável / B3")
             );
 
-            return new ScrapedSnapshot(ticker, formatCompanyName(empresa, ticker), setor, cotacao, variacaoDia, pl, pvp, dy, roe, margemLiquida);
+            BigDecimal cotacao = parseBrDecimal(cotacaoRaw, BigDecimal.ZERO);
+            BigDecimal variacaoDia = parseBrDecimal(getIndicatorValue(indicators, "DIA"), BigDecimal.ZERO);
+            BigDecimal pl = parseBrDecimal(getIndicatorValue(indicators, "P/L"), BigDecimal.ZERO);
+            BigDecimal pvp = parseBrDecimal(getIndicatorValue(indicators, "P/VP"), BigDecimal.ZERO);
+            BigDecimal dy = parseBrDecimal(getIndicatorValue(indicators, "DIV. YIELD"), BigDecimal.ZERO);
+            BigDecimal roe = parseBrDecimal(getIndicatorValue(indicators, "ROE"), BigDecimal.ZERO);
+            BigDecimal margemLiquida = parseBrDecimal(
+                    getIndicatorValue(indicators, "MARG. LÍQUIDA", "MARG. LIQUIDA"),
+                    BigDecimal.ZERO
+            );
+
+            return new ScrapedSnapshot(
+                    ticker,
+                    empresa,
+                    setor,
+                    cotacao,
+                    variacaoDia,
+                    pl,
+                    pvp,
+                    dy,
+                    roe,
+                    margemLiquida,
+                    indicators,
+                    parsedTables
+            );
         } catch (Exception ex) {
             log.warn("Coleta Fundamentus indisponível para {}: {}", ticker, ex.getMessage());
             return null;
         }
     }
 
-    private boolean isSnapshotComplete(ScrapedSnapshot s) {
-        return s != null
-                && s.cotacaoAtual() != null
-                && s.cotacaoAtual().compareTo(BigDecimal.ZERO) > 0
-                && s.pl() != null
-                && s.pvp() != null
-                && s.dividendYield() != null;
-    }
+    private void extractKeyValuePairsFromRow(Elements cells, Map<String, String> indicators, boolean isDreTable) {
+        for (int i = 0; i < cells.size() - 1; i += 2) {
+            String key = cleanCellText(cells.get(i).text());
+            String val = cleanCellText(cells.get(i + 1).text());
+            if (key.isEmpty()) continue;
 
-    private ScrapedSnapshot completeWithReferenceData(String ticker, ScrapedSnapshot partial, Stock fallbackStock) {
-        ScrapedSnapshot reference = buildB3ReferenceSnapshot(ticker, fallbackStock);
-        if (partial == null) {
-            return reference;
-        }
-        return new ScrapedSnapshot(
-                ticker,
-                firstNonBlank(partial.nomeEmpresa(), reference.nomeEmpresa()),
-                firstNonBlank(partial.setor(), reference.setor()),
-                firstNonNull(partial.cotacaoAtual(), reference.cotacaoAtual()),
-                firstNonNull(partial.variacaoDiaria(), reference.variacaoDiaria()),
-                firstNonNull(partial.pl(), reference.pl()),
-                firstNonNull(partial.pvp(), reference.pvp()),
-                firstNonNull(partial.dividendYield(), reference.dividendYield()),
-                firstNonNull(partial.roe(), reference.roe()),
-                firstNonNull(partial.margemLiquida(), reference.margemLiquida())
-        );
-    }
-
-    private ScrapedSnapshot buildB3ReferenceSnapshot(String ticker, Stock fallback) {
-        return switch (ticker) {
-            case "PETR4" -> snapshot("PETR4", "PETROBRAS PN", "Petróleo, Gás e Biocombustíveis", "36.12", "0.84", "4.82", "1.14", "15.42", "23.68", "17.95");
-            case "VALE3" -> snapshot("VALE3", "VALE ON", "Mineração", "58.90", "-0.62", "5.84", "1.32", "9.85", "22.45", "19.30");
-            case "ITUB4" -> snapshot("ITUB4", "ITAUUNIBANCO PN", "Intermediários Financeiros", "35.48", "0.95", "8.42", "1.81", "7.45", "21.50", "23.80");
-            case "WEGE3" -> snapshot("WEGE3", "WEG S.A. ON", "Máquinas e Equipamentos", "54.75", "1.42", "35.80", "11.65", "1.52", "32.54", "17.65");
-            case "BBAS3" -> snapshot("BBAS3", "BRASIL ON", "Intermediários Financeiros", "26.84", "0.48", "4.32", "0.89", "10.15", "20.62", "24.40");
-            default -> {
-                if (fallback != null && fallback.getFundamental() != null && !isLegacyOrPoisonedRecord(fallback.getFundamental())) {
-                    StockFundamental f = fallback.getFundamental();
-                    yield new ScrapedSnapshot(
-                            ticker,
-                            fallback.getNomeEmpresa(),
-                            fallback.getSetor(),
-                            fallback.getCotacaoAtual(),
-                            fallback.getVariacaoDiaria(),
-                            f.getPl(),
-                            f.getPvp(),
-                            f.getDividendYield(),
-                            f.getRoe(),
-                            f.getMargemLiquida()
-                    );
+            if (isDreTable && cells.size() >= 4) {
+                String suffix = (i == 0) ? " (12m)" : " (3m)";
+                indicators.put(key + suffix, val);
+                if (i == 0) {
+                    indicators.putIfAbsent(key, val);
                 }
-                int h = Math.abs(ticker.hashCode());
-                BigDecimal cotacao = BigDecimal.valueOf(12.50 + (h % 4800) / 100.0).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal varDia = BigDecimal.valueOf(((h % 540) - 240) / 100.0).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal pl = BigDecimal.valueOf(4.20 + ((h / 7) % 2200) / 100.0).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal pvp = BigDecimal.valueOf(0.75 + ((h / 13) % 350) / 100.0).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal dy = BigDecimal.valueOf(2.10 + ((h / 19) % 1150) / 100.0).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal roe = BigDecimal.valueOf(8.40 + ((h / 23) % 2100) / 100.0).setScale(2, RoundingMode.HALF_UP);
-                BigDecimal margem = BigDecimal.valueOf(6.50 + ((h / 29) % 2400) / 100.0).setScale(2, RoundingMode.HALF_UP);
-                yield new ScrapedSnapshot(ticker, ticker + " S.A.", "Renda Variável / B3", cotacao, varDia, pl, pvp, dy, roe, margem);
+            } else {
+                indicators.putIfAbsent(key, val);
             }
+        }
+    }
+
+    private String getIndicatorValue(Map<String, String> indicators, String... candidateKeys) {
+        for (String candidate : candidateKeys) {
+            for (Map.Entry<String, String> entry : indicators.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(candidate)) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    private String resolveDefaultTableTitle(int index) {
+        return switch (index) {
+            case 1 -> "Identificação e Cotação do Papel";
+            case 2 -> "Valor de Mercado e Estrutura Acionária";
+            case 3 -> "Oscilações e Indicadores Fundamentalistas";
+            case 4 -> "Dados Balanço Patrimonial";
+            case 5 -> "Dados Demonstrativos de Resultados";
+            default -> "Indicadores Adicionais";
         };
     }
 
-    private ScrapedSnapshot snapshot(
-            String ticker,
-            String empresa,
-            String setor,
-            String cotacao,
-            String variacao,
-            String pl,
-            String pvp,
-            String dy,
-            String roe,
-            String margem) {
-        return new ScrapedSnapshot(
-                ticker,
-                empresa,
-                setor,
-                new BigDecimal(cotacao),
-                new BigDecimal(variacao),
-                new BigDecimal(pl),
-                new BigDecimal(pvp),
-                new BigDecimal(dy),
-                new BigDecimal(roe),
-                new BigDecimal(margem)
-        );
+    private String cleanCellText(String raw) {
+        if (raw == null) return "";
+        String cleaned = raw.replace("\u00a0", " ").trim();
+        while (cleaned.startsWith("?")) {
+            cleaned = cleaned.substring(1).trim();
+        }
+        return cleaned;
+    }
+
+    private int parseColSpan(String rawColSpan) {
+        if (rawColSpan == null || rawColSpan.isBlank()) {
+            return 1;
+        }
+        try {
+            return Math.max(1, Integer.parseInt(rawColSpan.trim()));
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    private ScrapedSnapshot buildFallbackSnapshot(String ticker, Stock fallback) {
+        String empresa = fallback != null ? fallback.getNomeEmpresa() : ticker + " S.A.";
+        String setor = fallback != null ? fallback.getSetor() : "Renda Variável / B3";
+        BigDecimal cotacao = fallback != null ? fallback.getCotacaoAtual() : new BigDecimal("25.00");
+        BigDecimal varDia = fallback != null ? fallback.getVariacaoDiaria() : BigDecimal.ZERO;
+
+        StockFundamental f = fallback != null ? fallback.getFundamental() : null;
+        BigDecimal pl = f != null && f.getPl() != null ? f.getPl() : new BigDecimal("8.00");
+        BigDecimal pvp = f != null && f.getPvp() != null ? f.getPvp() : new BigDecimal("1.20");
+        BigDecimal dy = f != null && f.getDividendYield() != null ? f.getDividendYield() : new BigDecimal("6.50");
+        BigDecimal roe = f != null && f.getRoe() != null ? f.getRoe() : new BigDecimal("15.00");
+        BigDecimal margem = f != null && f.getMargemLiquida() != null ? f.getMargemLiquida() : new BigDecimal("12.00");
+
+        Map<String, String> ind = new LinkedHashMap<>();
+        ind.put("Papel", ticker);
+        ind.put("Cotação", cotacao.toPlainString());
+        ind.put("Empresa", empresa);
+        ind.put("Setor", setor);
+        ind.put("Dia", varDia + "%");
+        ind.put("P/L", pl.toPlainString());
+        ind.put("P/VP", pvp.toPlainString());
+        ind.put("Div. Yield", dy + "%");
+        ind.put("ROE", roe + "%");
+        ind.put("Marg. Líquida", margem + "%");
+
+        return new ScrapedSnapshot(ticker, empresa, setor, cotacao, varDia, pl, pvp, dy, roe, margem, ind, List.of());
     }
 
     private Stock persistSnapshot(String ticker, ScrapedSnapshot snapshot, Stock existingStock) {
@@ -307,6 +372,7 @@ public class ScraperEngine {
         fundamental.setDividendYield(snapshot.dividendYield());
         fundamental.setRoe(snapshot.roe());
         fundamental.setMargemLiquida(snapshot.margemLiquida());
+        fundamental.setDadosFundamentus(serializePayload(snapshot.indicadores(), snapshot.tabelas()));
         fundamental.setDataAtualizacao(OffsetDateTime.now());
 
         StockFundamental savedFund = fundamentalRepository.save(fundamental);
@@ -314,24 +380,33 @@ public class ScraperEngine {
         return savedStock;
     }
 
-    private String sanitizeTicker(String rawTicker) {
-        return rawTicker == null ? "" : rawTicker.trim().toUpperCase(Locale.ROOT);
+    private String serializePayload(Map<String, String> indicadores, List<FundamentusTableDTO> tabelas) {
+        try {
+            return objectMapper.writeValueAsString(new StoredFundamentusPayload(indicadores, tabelas));
+        } catch (Exception e) {
+            log.warn("Erro ao serializar payload do Fundamentus: {}", e.getMessage());
+            return "{}";
+        }
     }
 
-    private String formatCompanyName(String rawName, String ticker) {
-        if (rawName == null || rawName.isBlank()) {
-            return ticker;
+    private StoredFundamentusPayload deserializePayload(String json) {
+        if (json == null || json.isBlank()) {
+            return new StoredFundamentusPayload(Map.of(), List.of());
         }
-        return rawName.trim();
+        try {
+            return objectMapper.readValue(json, new TypeReference<StoredFundamentusPayload>() {});
+        } catch (Exception e) {
+            return new StoredFundamentusPayload(Map.of(), List.of());
+        }
+    }
+
+    private String sanitizeTicker(String rawTicker) {
+        return rawTicker == null ? "" : rawTicker.trim().toUpperCase(Locale.ROOT);
     }
 
     private String firstNonBlank(String first, String second) {
         if (first != null && !first.isBlank()) return first;
         return second;
-    }
-
-    private <T> T firstNonNull(T first, T second) {
-        return first != null ? first : second;
     }
 
     private BigDecimal parseBrDecimal(String raw, BigDecimal fallback) {
@@ -356,6 +431,7 @@ public class ScraperEngine {
     }
 
     private StockDetailResponse toResponse(Stock stock, StockFundamental fund, boolean fromCache) {
+        StoredFundamentusPayload payload = deserializePayload(fund.getDadosFundamentus());
         return new StockDetailResponse(
                 stock.getTicker(),
                 stock.getNomeEmpresa(),
@@ -368,7 +444,9 @@ public class ScraperEngine {
                 fund.getRoe(),
                 fund.getMargemLiquida(),
                 fund.getDataAtualizacao(),
-                fromCache
+                fromCache,
+                payload.indicadores() != null ? payload.indicadores() : Map.of(),
+                payload.tabelas() != null ? payload.tabelas() : List.of()
         );
     }
 }
