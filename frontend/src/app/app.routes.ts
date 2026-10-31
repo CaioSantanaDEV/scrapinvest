@@ -23,6 +23,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'compare',
+    title: 'ScrapInvest | Comparador Lado a Lado',
+    loadComponent: () =>
+      import('./pages/stock-comparison/stock-comparison.component').then(
+        (m) => m.StockComparisonComponent
+      ),
+  },
+  {
     path: 'portfolio',
     title: 'ScrapInvest | Minha Carteira',
     loadComponent: () =>

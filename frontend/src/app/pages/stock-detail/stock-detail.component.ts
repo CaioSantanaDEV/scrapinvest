@@ -875,7 +875,7 @@ export class StockDetailComponent implements OnInit {
 
   addToComparison(ticker: string): void {
     this.api.addTickersToComparison(ticker);
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/compare'], { queryParams: { tickers: this.api.comparisonTickers().join(',') } });
   }
 
   forceRefreshCurrentStock(): void {

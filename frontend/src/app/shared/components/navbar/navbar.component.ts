@@ -50,6 +50,13 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
             >
               Análise de Papel
             </a>
+            <a
+              routerLink="/compare"
+              routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
+              class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
+            >
+              Comparar
+            </a>
           </nav>
         </div>
 
@@ -184,7 +191,7 @@ export class NavbarComponent implements OnInit {
       this.api.addTickersToComparison(raw);
       this.dropdownOpen.set(false);
       this.searchQuery.set('');
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/compare'], { queryParams: { tickers: parts.join(',') } });
     } else {
       this.selectTicker(parts[0]);
     }
@@ -196,8 +203,15 @@ export class NavbarComponent implements OnInit {
       this.api.addTickersToComparison(raw);
       this.dropdownOpen.set(false);
       this.searchQuery.set('');
+      this.router.navigate(['/compare'], { queryParams: { tickers: raw } });
+    } else {
+      const current = this.api.comparisonTickers();
+      if (current.length > 0) {
+        this.router.navigate(['/compare'], { queryParams: { tickers: current.join(',') } });
+      } else {
+        this.router.navigate(['/compare']);
+      }
     }
-    this.router.navigate(['/dashboard']);
   }
 
   selectTicker(ticker: string): void {
