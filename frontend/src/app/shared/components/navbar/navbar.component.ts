@@ -52,8 +52,8 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
           </nav>
         </div>
 
-        <div class="relative w-full max-w-xs sm:max-w-md">
-          <form (ngSubmit)="onSearch()" class="flex items-center gap-2">
+        <div class="relative w-full max-w-sm sm:max-w-lg">
+          <form (ngSubmit)="onSearch()" class="flex items-center gap-1.5">
             <div class="relative flex-1">
               <span class="material-icons text-slate-400 text-base absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                 search
@@ -66,15 +66,25 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
                 (focus)="dropdownOpen.set(true)"
                 (blur)="closeDropdownDelayed()"
                 autocomplete="off"
-                placeholder="Buscar ticker na B3 (ex: PETR4, MGLU3, WEGE3)..."
-                class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-600 rounded-lg pl-9 pr-3.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 font-mono uppercase outline-none transition"
+                placeholder="Ex: PETR4 ou PETR4, VALE3, BBAS3..."
+                class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-600 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 font-mono uppercase outline-none transition"
               />
             </div>
             <button
               type="submit"
-              class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition shrink-0"
+              class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition shrink-0 shadow-sm"
+              title="Consultar papel ou lista de papéis"
             >
               Consultar
+            </button>
+            <button
+              type="button"
+              (click)="onCompare()"
+              class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold transition shrink-0 flex items-center gap-1"
+              title="Adicionar à planilha de comparação"
+            >
+              <span class="material-icons text-sm">compare_arrows</span>
+              <span class="hidden sm:inline">Comparar</span>
             </button>
           </form>
 
@@ -150,9 +160,28 @@ export class NavbarComponent implements OnInit {
   }
 
   onSearch(): void {
-    const clean = this.searchQuery().trim().toUpperCase();
-    if (!clean) return;
-    this.selectTicker(clean);
+    const raw = this.searchQuery().trim();
+    if (!raw) return;
+
+    const parts = raw.split(/[\s,;+]+/).filter(p => p.trim().length > 0);
+    if (parts.length > 1) {
+      this.api.addTickersToComparison(raw);
+      this.dropdownOpen.set(false);
+      this.searchQuery.set('');
+      this.router.navigate(['/dashboard']);
+    } else {
+      this.selectTicker(parts[0]);
+    }
+  }
+
+  onCompare(): void {
+    const raw = this.searchQuery().trim();
+    if (raw) {
+      this.api.addTickersToComparison(raw);
+      this.dropdownOpen.set(false);
+      this.searchQuery.set('');
+    }
+    this.router.navigate(['/dashboard']);
   }
 
   selectTicker(ticker: string): void {

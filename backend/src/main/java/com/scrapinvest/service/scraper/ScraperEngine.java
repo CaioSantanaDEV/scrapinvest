@@ -109,9 +109,15 @@ public class ScraperEngine {
         Set<String> seen = new LinkedHashSet<>();
         for (String raw : rawTickers) {
             for (String token : raw.split("[,;\\s+]+")) {
-                String clean = sanitizeTicker(token);
-                if (!clean.isEmpty() && seen.add(clean)) {
-                    results.add(getOrScrapeStock(clean));
+                String trimmed = token.trim();
+                if (trimmed.isEmpty()) continue;
+                try {
+                    String clean = sanitizeTicker(trimmed);
+                    if (seen.add(clean)) {
+                        results.add(getOrScrapeStock(clean));
+                    }
+                } catch (IllegalArgumentException e) {
+                    log.warn("Token ignorado na consulta múltipla: {}", trimmed);
                 }
             }
         }
@@ -400,8 +406,17 @@ public class ScraperEngine {
         }
     }
 
+    private static final java.util.regex.Pattern TICKER_REGEX = java.util.regex.Pattern.compile("^[A-Z0-9]{4,6}$");
+
     private String sanitizeTicker(String rawTicker) {
-        return rawTicker == null ? "" : rawTicker.trim().toUpperCase(Locale.ROOT);
+        if (rawTicker == null) {
+            throw new IllegalArgumentException("Ticker não pode ser nulo");
+        }
+        String clean = rawTicker.trim().toUpperCase(Locale.ROOT);
+        if (!TICKER_REGEX.matcher(clean).matches()) {
+            throw new IllegalArgumentException("Formato de ticker inválido: '" + rawTicker + "'. Use o formato padrão B3 (ex: PETR4, VALE3).");
+        }
+        return clean;
     }
 
     private String firstNonBlank(String first, String second) {
