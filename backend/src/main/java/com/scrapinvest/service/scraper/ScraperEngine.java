@@ -204,9 +204,16 @@ public class ScraperEngine {
                     List<FundamentusCellDTO> rowCells = new ArrayList<>();
                     for (Element cell : cells) {
                         String cleanText = cleanCellText(cell.text());
-                        boolean isHeader = row.hasClass("topo") || cell.hasClass("topo");
-                        boolean isLabel = !isHeader && cell.hasClass("label");
                         int colSpan = parseColSpan(cell.attr("colspan"));
+                        boolean isHeader = row.hasClass("topo") || cell.hasClass("topo")
+                                || row.hasClass("nivel1") || cell.hasClass("nivel1")
+                                || cell.hasClass("destaque") || cell.tagName().equalsIgnoreCase("th")
+                                || (colSpan > 1 && !cell.hasClass("label") && (
+                                        cleanText.equalsIgnoreCase("Oscilações")
+                                        || cleanText.equalsIgnoreCase("Indicadores fundamentalistas")
+                                        || cleanText.toLowerCase(Locale.ROOT).contains("meses")));
+
+                        boolean isLabel = !isHeader && cell.hasClass("label");
 
                         if (isHeader && colSpan >= 4 && !cleanText.isEmpty()) {
                             tableTitle = cleanText;
@@ -218,7 +225,7 @@ public class ScraperEngine {
                     }
                     tableRows.add(new FundamentusRowDTO(rowCells));
 
-                    if (!row.hasClass("topo")) {
+                    if (!row.hasClass("topo") && !row.hasClass("nivel1")) {
                         extractKeyValuePairsFromRow(cells, indicators, isDreTable);
                     }
                 }
