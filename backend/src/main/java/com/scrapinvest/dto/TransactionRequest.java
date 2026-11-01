@@ -19,5 +19,7 @@ public record TransactionRequest(
         Integer quantidade,
         @NotNull @Positive(message = "O preço unitário deve ser maior que zero")
         BigDecimal precoUnitario,
-        LocalDate dataTransacao
+        LocalDate dataTransacao,
+        String indexador,
+        BigDecimal taxaContratada
 ) {}

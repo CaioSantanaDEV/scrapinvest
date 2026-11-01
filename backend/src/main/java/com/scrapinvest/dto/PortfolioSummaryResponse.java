@@ -1,6 +1,7 @@
 package com.scrapinvest.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +24,12 @@ public record PortfolioSummaryResponse(
             BigDecimal patrimonioAtualizado,
             BigDecimal lucroPrejuizo,
             BigDecimal rentabilidadePercentual,
-            BigDecimal pesoCarteiraPercentual
+            BigDecimal pesoCarteiraPercentual,
+            LocalDate primeiraCompra,
+            Long diasEmCustodia,
+            BigDecimal rentabilidadeAnualizada,
+            BigDecimal valorBruto,
+            BigDecimal impostoRendaRetido,
+            int totalAportes
     ) {}
 }

@@ -40,6 +40,8 @@ export interface TransactionRequest {
   quantidade: number;
   precoUnitario: number;
   dataTransacao?: string;
+  indexador?: string;
+  taxaContratada?: number;
 }
 
 export interface TransactionItem {
@@ -51,6 +53,8 @@ export interface TransactionItem {
   precoUnitario: number;
   valorTotal: number;
   dataTransacao: string;
+  indexador?: string;
+  taxaContratada?: number;
 }
 
 export interface PositionItem {
@@ -65,6 +69,12 @@ export interface PositionItem {
   lucroPrejuizo: number;
   rentabilidadePercentual: number;
   pesoCarteiraPercentual: number;
+  primeiraCompra?: string;
+  diasEmCustodia?: number;
+  rentabilidadeAnualizada?: number;
+  valorBruto?: number;
+  impostoRendaRetido?: number;
+  totalAportes?: number;
 }
 
 export interface PortfolioSummary {

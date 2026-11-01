@@ -14,5 +14,7 @@ public record TransactionResponse(
         Integer quantidade,
         BigDecimal precoUnitario,
         BigDecimal valorTotal,
-        LocalDate dataTransacao
+        LocalDate dataTransacao,
+        String indexador,
+        BigDecimal taxaContratada
 ) {}

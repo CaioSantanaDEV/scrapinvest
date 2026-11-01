@@ -1212,6 +1212,9 @@ export class FixedIncomeCalculatorComponent implements OnInit {
       tipo: 'COMPRA',
       quantidade: 1,
       precoUnitario: Math.round(this.result().totalInvestido * 100) / 100,
+      dataTransacao: new Date().toISOString().substring(0, 10),
+      indexador: this.indexador,
+      taxaContratada: this.taxaContratada,
     };
 
     this.isAddingToPortfolio.set(true);

@@ -94,7 +94,7 @@ interface MetricSection {
           </span>
 
           @for (t of tickers(); track t) {
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-ferrugem text-white text-xs font-mono font-bold shadow-xs">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-ferrugem text-white text-xs font-mono font-bold shadow-xs">
               {{ t }}
               <button
                 type="button"
@@ -190,7 +190,7 @@ interface MetricSection {
                     <th class="py-4 px-4 text-center min-w-[170px] border-r border-slate-200 dark:border-slate-800 last:border-r-0">
                       <div class="flex flex-col items-center gap-1.5">
                         <div class="flex items-center gap-1.5">
-                          <span class="px-3 py-1 rounded-lg bg-slate-900 dark:bg-ferrugem text-white font-mono font-bold text-sm tracking-tight shadow-xs">
+                          <span class="px-3 py-1 rounded-lg bg-ferrugem text-white font-mono font-bold text-sm tracking-tight shadow-xs">
                             {{ stock.ticker }}
                           </span>
                           <button

@@ -128,16 +128,23 @@ interface SectorAllocation {
             <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
               <h2 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Distribuição por Setor</h2>
               <div class="space-y-3">
-                @for (sec of sectorAllocations(); track sec.setor) {
+                @for (sec of sectorAllocations(); track sec.setor; let i = $index) {
                   <div class="space-y-1">
                     <div class="flex justify-between text-xs">
-                      <span class="text-slate-700 dark:text-slate-300 font-medium truncate max-w-[200px]">{{ sec.setor }}</span>
-                      <span class="tabular-nums text-slate-900 dark:text-slate-100 font-semibold">
+                      <div class="flex items-center gap-2 truncate max-w-[220px]">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" [ngClass]="barColors[i % barColors.length]"></span>
+                        <span class="text-slate-700 dark:text-slate-300 font-medium truncate">{{ sec.setor }}</span>
+                      </div>
+                      <span class="tabular-nums text-slate-900 dark:text-slate-100 font-semibold whitespace-nowrap">
                         {{ sec.percentual | number:'1.1-1' }}% ({{ sec.valor | currency:'BRL' }})
                       </span>
                     </div>
                     <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                      <div class="h-full bg-ferrugem transition-all duration-500" [style.width.%]="sec.percentual"></div>
+                      <div
+                        class="h-full transition-all duration-500"
+                        [ngClass]="barColors[i % barColors.length]"
+                        [style.width.%]="sec.percentual"
+                      ></div>
                     </div>
                   </div>
                 }
@@ -159,13 +166,13 @@ interface SectorAllocation {
               <table class="w-full border-collapse">
                 <thead>
                   <tr class="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    <th class="py-3.5 px-4 text-left">Ativo / Setor</th>
+                    <th class="py-3.5 px-4 text-left min-w-[250px]">Ativo / Histórico</th>
                     <th class="py-3.5 px-4 text-right">Custódia</th>
                     <th class="py-3.5 px-4 text-right">Preço Médio</th>
                     <th class="py-3.5 px-4 text-right">Cotação Atual</th>
                     <th class="py-3.5 px-4 text-right">Total Investido</th>
-                    <th class="py-3.5 px-4 text-right">Saldo Atualizado</th>
-                    <th class="py-3.5 px-4 text-right">Rentabilidade</th>
+                    <th class="py-3.5 px-4 text-right whitespace-nowrap">Saldo Atualizado</th>
+                    <th class="py-3.5 px-4 text-right">Rentabilidade (Total / a.a.)</th>
                     <th class="py-3.5 px-4 text-right">% Carteira</th>
                     <th class="py-3.5 px-4 text-center">Ações</th>
                   </tr>
@@ -173,17 +180,31 @@ interface SectorAllocation {
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-sm tabular-nums">
                   @for (pos of s.posicoes; track pos.ticker) {
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                      <td class="py-3.5 px-4 text-left">
-                        <div class="flex items-center gap-2.5">
+                      <td class="py-3.5 px-4 text-left min-w-[250px]">
+                        <div class="flex items-start gap-2.5">
                           <a
-                            [routerLink]="['/stocks', pos.ticker]"
-                            class="px-2 py-0.5 rounded-lg bg-ferrugem text-white font-mono font-bold tracking-tight text-xs hover:bg-ferrugem-700 transition shadow-xs"
+                            [routerLink]="pos.setor === 'Renda Fixa' ? '/calculadora-renda-fixa' : ['/stocks', pos.ticker]"
+                            class="px-2 py-0.5 rounded-lg bg-ferrugem text-white font-mono font-bold tracking-tight text-xs hover:bg-ferrugem-700 transition shadow-xs mt-0.5 shrink-0"
                           >
                             {{ pos.ticker }}
                           </a>
-                          <div>
-                            <p class="font-semibold text-slate-900 dark:text-slate-100 text-xs">{{ pos.nomeEmpresa }}</p>
+                          <div class="min-w-0">
+                            <p class="font-semibold text-slate-900 dark:text-slate-100 text-xs truncate">{{ pos.nomeEmpresa }}</p>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ pos.setor }}</p>
+                            @if (pos.primeiraCompra) {
+                              <div class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
+                                <span class="material-icons text-[13px] text-ferrugem shrink-0">calendar_today</span>
+                                <span class="whitespace-nowrap">Desde {{ pos.primeiraCompra | date:'dd/MM/yyyy' }}</span>
+                                @if (pos.diasEmCustodia !== undefined && pos.diasEmCustodia !== null) {
+                                  <span class="text-slate-400 dark:text-slate-500 font-mono whitespace-nowrap">({{ pos.diasEmCustodia }}d)</span>
+                                }
+                                @if (pos.totalAportes && pos.totalAportes > 1) {
+                                  <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap inline-flex items-center shrink-0">
+                                    {{ pos.totalAportes }} aportes
+                                  </span>
+                                }
+                              </div>
+                            }
                           </div>
                         </div>
                       </td>
@@ -191,7 +212,21 @@ interface SectorAllocation {
                       <td class="py-3.5 px-4 text-right text-slate-700 dark:text-slate-300">{{ pos.precoMedio | currency:'BRL' }}</td>
                       <td class="py-3.5 px-4 text-right font-semibold text-slate-900 dark:text-slate-100">{{ pos.cotacaoAtual | currency:'BRL' }}</td>
                       <td class="py-3.5 px-4 text-right text-slate-700 dark:text-slate-300">{{ pos.patrimonioInvestido | currency:'BRL' }}</td>
-                      <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-slate-100">{{ pos.patrimonioAtualizado | currency:'BRL' }}</td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap min-w-[130px]">
+                        <div class="font-bold text-slate-900 dark:text-slate-100">
+                          {{ pos.patrimonioAtualizado | currency:'BRL' }}
+                        </div>
+                        @if (pos.valorBruto && pos.impostoRendaRetido !== undefined && pos.impostoRendaRetido !== null) {
+                          <div class="text-[10px] text-slate-500 dark:text-slate-400 tabular-nums whitespace-nowrap">
+                            <span>Bruto: {{ pos.valorBruto | currency:'BRL' }}</span>
+                            @if (pos.impostoRendaRetido > 0) {
+                              <span class="text-rose-500 dark:text-rose-400 ml-1 whitespace-nowrap">(-{{ pos.impostoRendaRetido | currency:'BRL' }} IR)</span>
+                            } @else {
+                              <span class="text-emerald-600 dark:text-emerald-400 ml-1 font-semibold whitespace-nowrap">(Isento IR)</span>
+                            }
+                          </div>
+                        }
+                      </td>
                       <td class="py-3.5 px-4 text-right">
                         <div
                           class="font-bold"
@@ -199,14 +234,24 @@ interface SectorAllocation {
                         >
                           {{ pos.lucroPrejuizo >= 0 ? '+' : '' }}{{ pos.lucroPrejuizo | currency:'BRL' }}
                         </div>
-                        <span
-                          class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border mt-0.5"
-                          [ngClass]="pos.rentabilidadePercentual >= 0
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
-                            : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60'"
-                        >
-                          {{ pos.rentabilidadePercentual >= 0 ? '+' : '' }}{{ pos.rentabilidadePercentual | number:'1.2-2' }}%
-                        </span>
+                        <div class="flex items-center justify-end gap-1 mt-0.5 flex-wrap">
+                          <span
+                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border"
+                            [ngClass]="pos.rentabilidadePercentual >= 0
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
+                              : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60'"
+                          >
+                            {{ pos.rentabilidadePercentual >= 0 ? '+' : '' }}{{ pos.rentabilidadePercentual | number:'1.2-2' }}%
+                          </span>
+                          @if (pos.rentabilidadeAnualizada !== undefined && pos.rentabilidadeAnualizada !== null) {
+                            <span
+                              class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                              title="Rentabilidade anualizada (CAGR / Taxa Interna de Retorno)"
+                            >
+                              {{ pos.rentabilidadeAnualizada >= 0 ? '+' : '' }}{{ pos.rentabilidadeAnualizada | number:'1.2-2' }}% a.a.
+                            </span>
+                          }
+                        </div>
                       </td>
                       <td class="py-3.5 px-4 text-right text-slate-700 dark:text-slate-300 font-medium">
                         {{ pos.pesoCarteiraPercentual | number:'1.1-1' }}%
@@ -379,6 +424,55 @@ interface SectorAllocation {
                 </div>
               </div>
 
+              <div class="grid grid-cols-2 gap-3">
+                <div [class.col-span-2]="modalCategory() === 'acoes'">
+                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Data da Operação
+                  </label>
+                  <input
+                    type="date"
+                    name="dataTransacao"
+                    [(ngModel)]="form.dataTransacao"
+                    required
+                    class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-ferrugem rounded-lg px-3.5 py-2 text-sm font-medium text-slate-900 dark:text-slate-100 outline-none"
+                  />
+                </div>
+
+                @if (modalCategory() === 'renda_fixa') {
+                  <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                      Indexador
+                    </label>
+                    <select
+                      name="indexador"
+                      [(ngModel)]="form.indexador"
+                      class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-ferrugem rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none"
+                    >
+                      <option value="CDI">% do CDI</option>
+                      <option value="PRE">Prefixado (% a.a.)</option>
+                      <option value="IPCA">IPCA + Spread</option>
+                    </select>
+                  </div>
+                }
+              </div>
+
+              @if (modalCategory() === 'renda_fixa') {
+                <div>
+                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Taxa Contratada {{ form.indexador === 'CDI' ? '(% do CDI)' : '(% a.a.)' }}
+                  </label>
+                  <input
+                    type="number"
+                    name="taxaContratada"
+                    [(ngModel)]="form.taxaContratada"
+                    step="0.01"
+                    min="0"
+                    placeholder="Ex: 100 ou 12.5"
+                    class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-ferrugem rounded-lg px-3.5 py-2 text-sm tabular-nums text-slate-900 dark:text-slate-100 outline-none"
+                  />
+                </div>
+              }
+
               <div class="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
                 <span class="text-slate-600 dark:text-slate-400 font-medium">Valor Total da Operação:</span>
                 <span class="tabular-nums font-bold text-slate-900 dark:text-slate-100 text-sm">
@@ -431,22 +525,28 @@ export class PortfolioComponent implements OnInit {
   modalCategory = signal<'acoes' | 'renda_fixa'>('acoes');
 
   readonly fixedIncomePresets = [
-    { ticker: 'CDB-DI-100', nome: 'CDB 100% CDI Diário', preco: 1000 },
-    { ticker: 'CDB-DI-110', nome: 'CDB 110% CDI Liquidez', preco: 1000 },
-    { ticker: 'LCI-DI-90', nome: 'LCI 90% CDI Isento', preco: 1000 },
-    { ticker: 'LCA-DI-92', nome: 'LCA 92% CDI Isento', preco: 1000 },
-    { ticker: 'TESOURO-SELIC', nome: 'Tesouro Selic 2029', preco: 15420.50 },
-    { ticker: 'TESOURO-IPCA', nome: 'Tesouro IPCA+ 2035', preco: 3410.80 },
-    { ticker: 'CRI-IPCA-6', nome: 'CRI IPCA + 6,5% a.a.', preco: 1000 },
+    { ticker: 'CDB-DI-100', nome: 'CDB 100% CDI Diário', preco: 1000, indexador: 'CDI', taxaContratada: 100 },
+    { ticker: 'CDB-DI-110', nome: 'CDB 110% CDI Liquidez', preco: 1000, indexador: 'CDI', taxaContratada: 110 },
+    { ticker: 'LCI-DI-90', nome: 'LCI 90% CDI Isento', preco: 1000, indexador: 'CDI', taxaContratada: 90 },
+    { ticker: 'LCA-DI-92', nome: 'LCA 92% CDI Isento', preco: 1000, indexador: 'CDI', taxaContratada: 92 },
+    { ticker: 'TESOURO-SELIC', nome: 'Tesouro Selic 2029', preco: 15420.50, indexador: 'CDI', taxaContratada: 100 },
+    { ticker: 'TESOURO-IPCA', nome: 'Tesouro IPCA+ 2035', preco: 3410.80, indexador: 'IPCA', taxaContratada: 6.4 },
+    { ticker: 'CRI-IPCA-6', nome: 'CRI IPCA + 6,5% a.a.', preco: 1000, indexador: 'IPCA', taxaContratada: 6.5 },
   ];
 
   readonly barColors = [
-    'bg-ferrugem',
-    'bg-emerald-500',
-    'bg-amber-500',
-    'bg-ferrugem-700',
-    'bg-teal-600',
-    'bg-slate-600',
+    'bg-[#AF4E22]',   // 1. Ferrugem ScrapInvest (Laranja marcante)
+    'bg-blue-600',     // 2. Azul Royal
+    'bg-emerald-500',  // 3. Verde Esmeralda
+    'bg-purple-600',   // 4. Roxo Violeta
+    'bg-amber-400',    // 5. Amarelo Dourado
+    'bg-cyan-500',     // 6. Ciano / Turquesa
+    'bg-pink-500',     // 7. Rosa Choque
+    'bg-lime-500',     // 8. Verde Limão
+    'bg-indigo-500',   // 9. Índigo Profundo
+    'bg-red-500',      // 10. Vermelho Vivo
+    'bg-teal-500',     // 11. Verde Petróleo
+    'bg-orange-400',   // 12. Laranja Claro
   ];
 
   form: TransactionRequest = {
@@ -454,6 +554,9 @@ export class PortfolioComponent implements OnInit {
     tipo: 'COMPRA',
     quantidade: 100,
     precoUnitario: 36.12,
+    dataTransacao: new Date().toISOString().substring(0, 10),
+    indexador: 'CDI',
+    taxaContratada: 100,
   };
 
   sectorAllocations = computed<SectorAllocation[]>(() => {
@@ -488,8 +591,11 @@ export class PortfolioComponent implements OnInit {
   }
 
   openNewOrderModal(): void {
+    if (!this.form.dataTransacao) {
+      this.form.dataTransacao = new Date().toISOString().substring(0, 10);
+    }
     const first = this.availableStocks()[0];
-    if (first) {
+    if (first && this.modalCategory() === 'acoes') {
       this.applyScrapedStockToForm(first);
     }
     this.showModal.set(true);
@@ -497,16 +603,21 @@ export class PortfolioComponent implements OnInit {
 
   setModalCategory(cat: 'acoes' | 'renda_fixa'): void {
     this.modalCategory.set(cat);
-    if (cat === 'renda_fixa' && !this.form.ticker.includes('-')) {
+    if (cat === 'renda_fixa') {
       this.applyFixedIncomePreset(this.fixedIncomePresets[0]);
     } else if (cat === 'acoes' && this.availableStocks().length > 0) {
       this.applyScrapedStockToForm(this.availableStocks()[0]);
     }
   }
 
-  applyFixedIncomePreset(preset: { ticker: string; nome: string; preco: number }): void {
+  applyFixedIncomePreset(preset: typeof this.fixedIncomePresets[number]): void {
     this.form.ticker = preset.ticker;
     this.form.precoUnitario = preset.preco;
+    this.form.indexador = preset.indexador;
+    this.form.taxaContratada = preset.taxaContratada;
+    if (!this.form.dataTransacao) {
+      this.form.dataTransacao = new Date().toISOString().substring(0, 10);
+    }
     if (this.form.quantidade <= 0) {
       this.form.quantidade = 1;
     }
@@ -515,24 +626,36 @@ export class PortfolioComponent implements OnInit {
   applyScrapedStockToForm(stock: StockDetail): void {
     this.form.ticker = stock.ticker;
     this.form.precoUnitario = Number(stock.cotacaoAtual);
+    this.form.indexador = undefined;
+    this.form.taxaContratada = undefined;
+    if (!this.form.dataTransacao) {
+      this.form.dataTransacao = new Date().toISOString().substring(0, 10);
+    }
   }
 
   prefillOrderFromScrapedStock(stock: StockDetail): void {
+    this.modalCategory.set('acoes');
     this.form = {
       ticker: stock.ticker,
       tipo: 'COMPRA',
       quantidade: 100,
       precoUnitario: Number(stock.cotacaoAtual),
+      dataTransacao: new Date().toISOString().substring(0, 10),
     };
     this.showModal.set(true);
   }
 
   prefillOrderForPosition(pos: PositionItem): void {
+    const isRf = pos.ticker.includes('-') || pos.setor.toLowerCase().includes('renda fixa');
+    this.modalCategory.set(isRf ? 'renda_fixa' : 'acoes');
     this.form = {
       ticker: pos.ticker,
       tipo: 'COMPRA',
-      quantidade: 100,
+      quantidade: isRf ? 1 : 100,
       precoUnitario: Number(pos.cotacaoAtual),
+      dataTransacao: new Date().toISOString().substring(0, 10),
+      indexador: isRf ? 'CDI' : undefined,
+      taxaContratada: isRf ? 100 : undefined,
     };
     this.showModal.set(true);
   }

@@ -50,7 +50,7 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
               routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
               class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
             >
-              Carteira Consolidada
+              Minha Carteira
             </a>
             <a
               routerLink="/calculadora-renda-fixa"

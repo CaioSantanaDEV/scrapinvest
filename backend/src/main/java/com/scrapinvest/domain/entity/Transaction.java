@@ -34,6 +34,12 @@ public class Transaction {
     @Column(name = "data_transacao", nullable = false)
     private LocalDate dataTransacao = LocalDate.now();
 
+    @Column(name = "indexador", length = 10)
+    private String indexador;
+
+    @Column(name = "taxa_contratada", precision = 8, scale = 4)
+    private BigDecimal taxaContratada;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private OffsetDateTime criadoEm = OffsetDateTime.now();
 
@@ -41,12 +47,18 @@ public class Transaction {
     }
 
     public Transaction(UUID usuarioId, String ticker, TransactionType tipo, Integer quantidade, BigDecimal precoUnitario, LocalDate dataTransacao) {
+        this(usuarioId, ticker, tipo, quantidade, precoUnitario, dataTransacao, null, null);
+    }
+
+    public Transaction(UUID usuarioId, String ticker, TransactionType tipo, Integer quantidade, BigDecimal precoUnitario, LocalDate dataTransacao, String indexador, BigDecimal taxaContratada) {
         this.usuarioId = usuarioId;
         this.ticker = ticker;
         this.tipo = tipo;
         this.quantidade = quantidade;
         this.precoUnitario = precoUnitario;
         this.dataTransacao = dataTransacao != null ? dataTransacao : LocalDate.now();
+        this.indexador = indexador;
+        this.taxaContratada = taxaContratada;
     }
 
     public Long getId() {
@@ -103,6 +115,22 @@ public class Transaction {
 
     public void setDataTransacao(LocalDate dataTransacao) {
         this.dataTransacao = dataTransacao;
+    }
+
+    public String getIndexador() {
+        return indexador;
+    }
+
+    public void setIndexador(String indexador) {
+        this.indexador = indexador;
+    }
+
+    public BigDecimal getTaxaContratada() {
+        return taxaContratada;
+    }
+
+    public void setTaxaContratada(BigDecimal taxaContratada) {
+        this.taxaContratada = taxaContratada;
     }
 
     public OffsetDateTime getCriadoEm() {

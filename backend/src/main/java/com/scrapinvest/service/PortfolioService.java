@@ -16,7 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class PortfolioService {
@@ -55,7 +59,9 @@ public class PortfolioService {
                 request.tipo(),
                 request.quantidade(),
                 request.precoUnitario(),
-                request.dataTransacao()
+                request.dataTransacao(),
+                request.indexador(),
+                request.taxaContratada()
         );
 
         return toTransactionResponse(transactionRepository.save(transaction));
@@ -133,25 +139,104 @@ public class PortfolioService {
     }
 
     private PositionItem buildPositionItem(String ticker, PositionAccumulator acc, StockDetailResponse stockInfo) {
-        BigDecimal currentPrice = stockInfo.cotacaoAtual() != null ? stockInfo.cotacaoAtual() : acc.averagePrice;
-        BigDecimal investedAmount = scaleCurrency(acc.averagePrice.multiply(BigDecimal.valueOf(acc.custodyQuantity)));
-        BigDecimal updatedAmount = scaleCurrency(currentPrice.multiply(BigDecimal.valueOf(acc.custodyQuantity)));
-        BigDecimal profitLoss = updatedAmount.subtract(investedAmount);
-        BigDecimal returnPercentage = calculatePercentage(profitLoss, investedAmount);
+        boolean isRf = scraperEngine.isFixedIncome(ticker) || "Renda Fixa".equalsIgnoreCase(stockInfo.setor());
+        LocalDate today = LocalDate.now();
+        long diasEmCustodia = acc.firstPurchaseDate != null ? Math.max(0, ChronoUnit.DAYS.between(acc.firstPurchaseDate, today)) : 0;
 
-        return new PositionItem(
-                ticker,
-                stockInfo.nomeEmpresa(),
-                stockInfo.setor(),
-                acc.custodyQuantity,
-                scaleCurrency(acc.averagePrice),
-                scaleCurrency(currentPrice),
-                investedAmount,
-                updatedAmount,
-                profitLoss,
-                returnPercentage,
-                BigDecimal.ZERO
-        );
+        if (isRf && !acc.buyTransactions.isEmpty()) {
+            BigDecimal totalInvested = BigDecimal.ZERO;
+            BigDecimal totalGross = BigDecimal.ZERO;
+            BigDecimal totalTax = BigDecimal.ZERO;
+            BigDecimal totalNet = BigDecimal.ZERO;
+
+            for (Transaction tx : acc.buyTransactions) {
+                BigDecimal principal = tx.getPrecoUnitario().multiply(BigDecimal.valueOf(tx.getQuantidade()));
+                totalInvested = totalInvested.add(principal);
+
+                LocalDate txDate = tx.getDataTransacao() != null ? tx.getDataTransacao() : today;
+                long lotDays = Math.max(0, ChronoUnit.DAYS.between(txDate, today));
+
+                String indexador = tx.getIndexador();
+                BigDecimal taxa = tx.getTaxaContratada();
+                if (indexador == null || indexador.isBlank()) {
+                    indexador = inferIndexador(ticker);
+                }
+                if (taxa == null || taxa.compareTo(BigDecimal.ZERO) <= 0) {
+                    taxa = inferTaxa(ticker);
+                }
+
+                double annualRate = computeAnnualRate(indexador, taxa.doubleValue());
+                double factor = Math.pow(1.0 + annualRate / 100.0, lotDays / 365.25);
+                BigDecimal lotGross = principal.multiply(BigDecimal.valueOf(factor));
+                BigDecimal lotProfit = lotGross.subtract(principal).max(BigDecimal.ZERO);
+
+                double taxRate = isTaxExempt(ticker) ? 0.0 : computeTaxRate(lotDays);
+                BigDecimal lotTax = lotProfit.multiply(BigDecimal.valueOf(taxRate / 100.0));
+                BigDecimal lotNet = lotGross.subtract(lotTax);
+
+                totalGross = totalGross.add(lotGross);
+                totalTax = totalTax.add(lotTax);
+                totalNet = totalNet.add(lotNet);
+            }
+
+            BigDecimal investedAmount = scaleCurrency(totalInvested);
+            BigDecimal updatedAmount = scaleCurrency(totalNet); // Valor Líquido na coluna principal
+            BigDecimal grossAmount = scaleCurrency(totalGross);
+            BigDecimal taxAmount = scaleCurrency(totalTax);
+            BigDecimal profitLoss = updatedAmount.subtract(investedAmount);
+            BigDecimal returnPercentage = calculatePercentage(profitLoss, investedAmount);
+            BigDecimal cagr = computeCagr(returnPercentage, diasEmCustodia);
+            BigDecimal currentPrice = acc.custodyQuantity > 0
+                    ? updatedAmount.divide(BigDecimal.valueOf(acc.custodyQuantity), 4, RoundingMode.HALF_UP)
+                    : acc.averagePrice;
+
+            return new PositionItem(
+                    ticker,
+                    stockInfo.nomeEmpresa(),
+                    "Renda Fixa",
+                    acc.custodyQuantity,
+                    scaleCurrency(acc.averagePrice),
+                    scaleCurrency(currentPrice),
+                    investedAmount,
+                    updatedAmount,
+                    profitLoss,
+                    returnPercentage,
+                    BigDecimal.ZERO,
+                    acc.firstPurchaseDate,
+                    diasEmCustodia,
+                    cagr,
+                    grossAmount,
+                    taxAmount,
+                    acc.totalPurchases
+            );
+        } else {
+            BigDecimal currentPrice = stockInfo.cotacaoAtual() != null ? stockInfo.cotacaoAtual() : acc.averagePrice;
+            BigDecimal investedAmount = scaleCurrency(acc.averagePrice.multiply(BigDecimal.valueOf(acc.custodyQuantity)));
+            BigDecimal updatedAmount = scaleCurrency(currentPrice.multiply(BigDecimal.valueOf(acc.custodyQuantity)));
+            BigDecimal profitLoss = updatedAmount.subtract(investedAmount);
+            BigDecimal returnPercentage = calculatePercentage(profitLoss, investedAmount);
+            BigDecimal cagr = computeCagr(returnPercentage, diasEmCustodia);
+
+            return new PositionItem(
+                    ticker,
+                    stockInfo.nomeEmpresa(),
+                    stockInfo.setor(),
+                    acc.custodyQuantity,
+                    scaleCurrency(acc.averagePrice),
+                    scaleCurrency(currentPrice),
+                    investedAmount,
+                    updatedAmount,
+                    profitLoss,
+                    returnPercentage,
+                    BigDecimal.ZERO,
+                    acc.firstPurchaseDate,
+                    diasEmCustodia,
+                    cagr,
+                    updatedAmount,
+                    BigDecimal.ZERO,
+                    acc.totalPurchases
+            );
+        }
     }
 
     private List<PositionItem> calculatePortfolioWeights(List<PositionItem> positions, BigDecimal totalUpdated) {
@@ -167,7 +252,13 @@ public class PortfolioService {
                         item.patrimonioAtualizado(),
                         item.lucroPrejuizo(),
                         item.rentabilidadePercentual(),
-                        calculatePercentage(item.patrimonioAtualizado(), totalUpdated)
+                        calculatePercentage(item.patrimonioAtualizado(), totalUpdated),
+                        item.primeiraCompra(),
+                        item.diasEmCustodia(),
+                        item.rentabilidadeAnualizada(),
+                        item.valorBruto(),
+                        item.impostoRendaRetido(),
+                        item.totalAportes()
                 ))
                 .toList();
     }
@@ -200,13 +291,75 @@ public class PortfolioService {
                 tx.getQuantidade(),
                 tx.getPrecoUnitario(),
                 totalValue,
-                tx.getDataTransacao()
+                tx.getDataTransacao(),
+                tx.getIndexador(),
+                tx.getTaxaContratada()
         );
+    }
+
+    private String inferIndexador(String ticker) {
+        String t = ticker.toUpperCase();
+        if (t.contains("PRE")) return "PRE";
+        if (t.contains("IPCA")) return "IPCA";
+        return "CDI";
+    }
+
+    private BigDecimal inferTaxa(String ticker) {
+        String t = ticker.toUpperCase();
+        Matcher m = Pattern.compile("(\\d+(\\.\\d+)?)").matcher(t);
+        if (m.find()) {
+            try {
+                return new BigDecimal(m.group(1));
+            } catch (Exception ignored) {}
+        }
+        if (t.contains("PRE")) return BigDecimal.valueOf(12.0);
+        if (t.contains("IPCA")) return BigDecimal.valueOf(6.0);
+        return BigDecimal.valueOf(100.0);
+    }
+
+    private double computeAnnualRate(String indexador, double taxa) {
+        double cdiBase = 10.65;
+        double ipcaProjetado = 4.10;
+        if ("CDI".equalsIgnoreCase(indexador)) {
+            return cdiBase * (taxa / 100.0);
+        } else if ("PRE".equalsIgnoreCase(indexador)) {
+            return taxa;
+        } else if ("IPCA".equalsIgnoreCase(indexador)) {
+            return ((1.0 + ipcaProjetado / 100.0) * (1.0 + taxa / 100.0) - 1.0) * 100.0;
+        }
+        return cdiBase;
+    }
+
+    private double computeTaxRate(long days) {
+        if (days <= 180) return 22.5;
+        if (days <= 360) return 20.0;
+        if (days <= 720) return 17.5;
+        return 15.0;
+    }
+
+    private boolean isTaxExempt(String ticker) {
+        String t = ticker.toUpperCase();
+        return t.contains("LCI") || t.contains("LCA") || t.contains("CRI") || t.contains("CRA") || t.contains("DEBENTURE");
+    }
+
+    private BigDecimal computeCagr(BigDecimal returnPct, long days) {
+        if (days >= 20 && returnPct != null && returnPct.compareTo(BigDecimal.ZERO) != 0) {
+            double anos = days / 365.25;
+            double ret = returnPct.doubleValue() / 100.0;
+            if (1.0 + ret > 0) {
+                double cagr = (Math.pow(1.0 + ret, 1.0 / anos) - 1.0) * 100.0;
+                return BigDecimal.valueOf(cagr).setScale(2, RoundingMode.HALF_UP);
+            }
+        }
+        return returnPct != null ? returnPct : BigDecimal.ZERO;
     }
 
     private static class PositionAccumulator {
         private int custodyQuantity = 0;
         private BigDecimal averagePrice = BigDecimal.ZERO;
+        private LocalDate firstPurchaseDate = null;
+        private int totalPurchases = 0;
+        private final List<Transaction> buyTransactions = new ArrayList<>();
 
         void apply(Transaction tx) {
             if (tx.getTipo() == TransactionType.COMPRA) {
@@ -215,10 +368,20 @@ public class PortfolioService {
                 custodyQuantity += tx.getQuantidade();
                 averagePrice = previousCost.add(purchaseCost)
                         .divide(BigDecimal.valueOf(custodyQuantity), 4, RoundingMode.HALF_UP);
+
+                LocalDate txDate = tx.getDataTransacao() != null ? tx.getDataTransacao() : LocalDate.now();
+                if (firstPurchaseDate == null || txDate.isBefore(firstPurchaseDate)) {
+                    firstPurchaseDate = txDate;
+                }
+                totalPurchases++;
+                buyTransactions.add(tx);
             } else if (tx.getTipo() == TransactionType.VENDA) {
                 custodyQuantity = Math.max(0, custodyQuantity - tx.getQuantidade());
                 if (custodyQuantity == 0) {
                     averagePrice = BigDecimal.ZERO;
+                    firstPurchaseDate = null;
+                    totalPurchases = 0;
+                    buyTransactions.clear();
                 }
             }
         }
