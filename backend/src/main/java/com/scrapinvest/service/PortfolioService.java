@@ -42,6 +42,12 @@ public class PortfolioService {
         String ticker = request.ticker().trim().toUpperCase();
 
         scraperEngine.getOrScrapeStock(ticker);
+        if (scraperEngine.isFixedIncome(ticker)) {
+            stockRepository.findById(ticker).ifPresent(s -> {
+                s.setCotacaoAtual(request.precoUnitario());
+                stockRepository.save(s);
+            });
+        }
 
         Transaction transaction = new Transaction(
                 userId,

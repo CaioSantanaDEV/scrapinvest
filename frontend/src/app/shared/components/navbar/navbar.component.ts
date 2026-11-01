@@ -14,10 +14,19 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
     <header class="fixed top-0 inset-x-0 z-50 h-16 bg-white dark:bg-[#181818] border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-200">
       <div class="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
         <div class="flex items-center gap-6 lg:gap-8">
-          <a routerLink="/dashboard" class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-lg bg-ferrugem flex items-center justify-center font-mono font-bold text-white text-sm tracking-tight shadow-xs">
-              SI
+          <a routerLink="/dashboard" class="flex items-center gap-2.5 group">
+            <!-- Logo Oficial ScrapInvest: Porca Hexagonal Laranja com Furo Central Transparente (Sem Bordas) -->
+            <div class="w-9 h-9 flex items-center justify-center transition-transform group-hover:scale-105 shrink-0">
+              <svg viewBox="0 0 100 100" class="w-full h-full" fill="none">
+                <path
+                  fill="#AF4E22"
+                  fill-rule="evenodd"
+                  d="M 33 16 L 67 16 L 85 50 L 67 84 L 33 84 L 15 50 Z
+                     M 50 33 A 17 17 0 1 0 50 67 A 17 17 0 1 0 50 33 Z"
+                />
+              </svg>
             </div>
+
             <div class="flex flex-col">
               <span class="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-none">
                 Scrap<span class="text-ferrugem">Invest</span>
@@ -42,6 +51,14 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
               class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
             >
               Carteira Consolidada
+            </a>
+            <a
+              routerLink="/calculadora-renda-fixa"
+              routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
+              class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition flex items-center gap-1"
+            >
+              <span class="material-icons text-xs">savings</span>
+              <span>Renda Fixa</span>
             </a>
             <a
               [routerLink]="['/stocks', 'PETR4']"
@@ -107,7 +124,7 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
                   >
                     <div>
                       <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-md bg-slate-900 dark:bg-ferrugem text-white font-mono font-bold tracking-tight text-xs">
+                        <span class="px-2 py-0.5 rounded-md bg-ferrugem text-white font-mono font-bold tracking-tight text-xs">
                           {{ item.ticker }}
                         </span>
                         <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ item.setor }}</span>

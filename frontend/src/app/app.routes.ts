@@ -31,6 +31,18 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'calculadora-renda-fixa',
+    title: 'ScrapInvest | Calculadora de Renda Fixa',
+    loadComponent: () =>
+      import('./pages/fixed-income/fixed-income-calculator.component').then(
+        (m) => m.FixedIncomeCalculatorComponent
+      ),
+  },
+  {
+    path: 'renda-fixa',
+    redirectTo: 'calculadora-renda-fixa',
+  },
+  {
     path: 'portfolio',
     title: 'ScrapInvest | Minha Carteira',
     loadComponent: () =>

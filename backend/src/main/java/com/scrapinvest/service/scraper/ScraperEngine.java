@@ -144,6 +144,44 @@ public class ScraperEngine {
     }
 
     private StockDetailResponse executeAndPersistScrape(String ticker, Stock existingStock) {
+        if (isFixedIncome(ticker)) {
+            Stock stock = existingStock != null ? existingStock : new Stock(ticker);
+            if (stock.getNomeEmpresa() == null || stock.getNomeEmpresa().isBlank()) {
+                stock.setNomeEmpresa(formatFixedIncomeName(ticker));
+            }
+            stock.setSetor("Renda Fixa");
+            if (stock.getCotacaoAtual() == null || stock.getCotacaoAtual().compareTo(BigDecimal.ZERO) == 0) {
+                stock.setCotacaoAtual(new BigDecimal("1000.00"));
+            }
+            stock.setVariacaoDiaria(BigDecimal.ZERO);
+            Stock savedStock = stockRepository.save(stock);
+
+            StockFundamental fundamental = savedStock.getFundamental();
+            if (fundamental == null) {
+                fundamental = fundamentalRepository.findByStockTickerIgnoreCase(ticker)
+                        .orElseGet(() -> new StockFundamental(savedStock));
+            }
+            fundamental.setDataAtualizacao(OffsetDateTime.now());
+            fundamentalRepository.save(fundamental);
+
+            return new StockDetailResponse(
+                    savedStock.getTicker(),
+                    savedStock.getNomeEmpresa(),
+                    "Renda Fixa",
+                    savedStock.getCotacaoAtual(),
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ONE,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    OffsetDateTime.now(),
+                    true,
+                    Map.of("Tipo", "Renda Fixa", "Segmento", "Títulos Públicos / Privados"),
+                    List.of()
+            );
+        }
+
         ScrapedSnapshot snapshot = collectFromFundamentus(ticker, existingStock);
         Stock savedStock = persistSnapshot(ticker, snapshot, existingStock);
         return toResponse(savedStock, savedStock.getFundamental(), false);
@@ -413,7 +451,28 @@ public class ScraperEngine {
         }
     }
 
-    private static final java.util.regex.Pattern TICKER_REGEX = java.util.regex.Pattern.compile("^[A-Z0-9]{4,6}$");
+    private static final java.util.regex.Pattern TICKER_REGEX = java.util.regex.Pattern.compile("^[A-Z0-9_.-]{2,16}$");
+
+    public boolean isFixedIncome(String ticker) {
+        if (ticker == null) return false;
+        String upper = ticker.trim().toUpperCase(Locale.ROOT);
+        return upper.startsWith("CDB") || upper.startsWith("LCI") || upper.startsWith("LCA")
+                || upper.startsWith("TD") || upper.startsWith("TESOURO") || upper.startsWith("CRI")
+                || upper.startsWith("CRA") || upper.startsWith("DEB") || upper.startsWith("RF")
+                || upper.startsWith("NTNB") || upper.startsWith("LTN") || upper.startsWith("LFT");
+    }
+
+    public String formatFixedIncomeName(String ticker) {
+        String upper = ticker.trim().toUpperCase(Locale.ROOT);
+        if (upper.startsWith("CDB")) return "CDB - Certificado de Depósito Bancário";
+        if (upper.startsWith("LCI")) return "LCI - Letra de Crédito Imobiliário";
+        if (upper.startsWith("LCA")) return "LCA - Letra de Crédito do Agronegócio";
+        if (upper.startsWith("TD") || upper.startsWith("TESOURO")) return "Tesouro Direto";
+        if (upper.startsWith("CRI")) return "CRI - Certificado de Recebíveis Imobiliários";
+        if (upper.startsWith("CRA")) return "CRA - Certificado de Recebíveis do Agronegócio";
+        if (upper.startsWith("DEB")) return "Debênture";
+        return ticker + " (Renda Fixa)";
+    }
 
     private String sanitizeTicker(String rawTicker) {
         if (rawTicker == null) {
@@ -421,7 +480,7 @@ public class ScraperEngine {
         }
         String clean = rawTicker.trim().toUpperCase(Locale.ROOT);
         if (!TICKER_REGEX.matcher(clean).matches()) {
-            throw new IllegalArgumentException("Formato de ticker inválido: '" + rawTicker + "'. Use o formato padrão B3 (ex: PETR4, VALE3).");
+            throw new IllegalArgumentException("Formato de ticker/ativo inválido: '" + rawTicker + "'. Use letras, números e traço (ex: PETR4, CDB-INTER, TESOURO-SELIC).");
         }
         return clean;
     }

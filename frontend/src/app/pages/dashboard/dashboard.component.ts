@@ -173,12 +173,12 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
           <div class="px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-2">
             <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">Papéis Concatenados:</span>
             @for (t of api.comparisonTickers(); track t) {
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-ferrugem border border-slate-200 dark:border-ferrugem-700 text-xs font-mono font-bold text-slate-900 dark:text-white shadow-xs">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-ferrugem text-white border border-ferrugem-700 text-xs font-mono font-bold shadow-xs">
                 {{ t }}
                 <button
                   type="button"
                   (click)="api.removeTickerFromComparison(t)"
-                  class="text-slate-400 dark:text-ferrugem-200 hover:text-rose-600 dark:hover:text-white transition"
+                  class="text-white/80 hover:text-white transition"
                   title="Remover"
                 >
                   &times;
@@ -237,7 +237,7 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                       <td class="py-2.5 px-3.5 text-left border-r border-slate-200 dark:border-slate-700">
                         <div class="flex items-center gap-2">
-                          <span class="px-2 py-0.5 rounded-md bg-slate-900 dark:bg-ferrugem text-white font-mono font-bold tracking-tight text-xs shadow-xs">
+                          <span class="px-2 py-0.5 rounded-md bg-ferrugem text-white font-mono font-bold tracking-tight text-xs shadow-xs">
                             {{ s.ticker }}
                           </span>
                           <span class="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-[120px]">{{ s.nomeEmpresa }}</span>
@@ -377,7 +377,7 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                 <div class="flex items-start justify-between gap-2">
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                      <span class="px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-ferrugem text-white font-mono font-bold tracking-tight text-sm shadow-xs">
+                      <span class="px-2.5 py-1 rounded-lg bg-ferrugem text-white font-mono font-bold tracking-tight text-sm shadow-xs">
                         {{ stock.ticker }}
                       </span>
                       <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-medium truncate max-w-[140px]">

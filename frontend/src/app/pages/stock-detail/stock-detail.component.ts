@@ -103,7 +103,7 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div class="space-y-1.5">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="px-3 py-1 rounded-lg bg-slate-900 dark:bg-ferrugem text-white text-xl font-mono font-bold tracking-tight shadow-sm">
+                <span class="px-3 py-1 rounded-lg bg-ferrugem text-white text-xl font-mono font-bold tracking-tight shadow-sm">
                   {{ s.ticker }}
                 </span>
                 <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">

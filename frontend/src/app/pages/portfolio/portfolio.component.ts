@@ -27,13 +27,22 @@ interface SectorAllocation {
           <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Consolidação Patrimonial</span>
           <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">Minha Carteira de Investimentos</h1>
         </div>
-        <button
-          type="button"
-          (click)="openNewOrderModal()"
-          class="px-5 py-2.5 rounded-lg bg-ferrugem hover:bg-ferrugem-700 text-xs font-semibold text-white shadow-sm transition self-start sm:self-auto cursor-pointer"
-        >
-          + Registrar Compra / Venda
-        </button>
+        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+          <a
+            routerLink="/calculadora-renda-fixa"
+            class="px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition flex items-center gap-1.5"
+          >
+            <span class="material-icons text-sm text-ferrugem">calculate</span>
+            <span>Calculadora Renda Fixa</span>
+          </a>
+          <button
+            type="button"
+            (click)="openNewOrderModal()"
+            class="px-5 py-2.5 rounded-lg bg-ferrugem hover:bg-ferrugem-700 text-xs font-semibold text-white shadow-sm transition cursor-pointer"
+          >
+            + Registrar Operação
+          </button>
+        </div>
       </div>
 
       @if (summary(); as s) {
@@ -168,7 +177,7 @@ interface SectorAllocation {
                         <div class="flex items-center gap-2.5">
                           <a
                             [routerLink]="['/stocks', pos.ticker]"
-                            class="px-2 py-0.5 rounded-lg bg-slate-900 dark:bg-ferrugem text-white font-mono font-bold tracking-tight text-xs hover:bg-ferrugem dark:hover:bg-ferrugem-700 transition shadow-xs"
+                            class="px-2 py-0.5 rounded-lg bg-ferrugem text-white font-mono font-bold tracking-tight text-xs hover:bg-ferrugem-700 transition shadow-xs"
                           >
                             {{ pos.ticker }}
                           </a>
@@ -239,7 +248,7 @@ interface SectorAllocation {
 
       @if (showModal()) {
         <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-md w-full p-6 space-y-5 shadow-xl">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
             <div class="flex items-center justify-between">
               <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Registrar Operação</h3>
               <button (click)="showModal.set(false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs font-semibold cursor-pointer">
@@ -247,53 +256,104 @@ interface SectorAllocation {
               </button>
             </div>
 
-            <div class="space-y-1.5">
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Preenchimento rápido:</span>
-              <div class="flex flex-wrap gap-1.5">
-                @for (st of availableStocks(); track st.ticker) {
-                  <button
-                    type="button"
-                    (click)="applyScrapedStockToForm(st)"
-                    class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer"
-                    [ngClass]="form.ticker.toUpperCase() === st.ticker
-                      ? 'bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem dark:text-ferrugem-300 border-ferrugem-300 dark:border-ferrugem-800'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'"
-                  >
-                    {{ st.ticker }}
-                  </button>
-                }
-              </div>
+            <!-- Abas do Modal: Ações vs Renda Fixa -->
+            <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                (click)="setModalCategory('acoes')"
+                [ngClass]="modalCategory() === 'acoes'
+                  ? 'bg-white dark:bg-slate-900 text-ferrugem font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 font-medium'"
+                class="flex-1 py-1.5 rounded-md text-xs transition cursor-pointer text-center"
+              >
+                Ações / FIIs (B3)
+              </button>
+              <button
+                type="button"
+                (click)="setModalCategory('renda_fixa')"
+                [ngClass]="modalCategory() === 'renda_fixa'
+                  ? 'bg-white dark:bg-slate-900 text-ferrugem font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 font-medium'"
+                class="flex-1 py-1.5 rounded-md text-xs transition cursor-pointer text-center flex items-center justify-center gap-1"
+              >
+                <span class="material-icons text-xs">savings</span>
+                <span>Renda Fixa</span>
+              </button>
             </div>
 
-            <form (ngSubmit)="submitTransaction()" class="space-y-4">
+            <!-- Preenchimento Rápido Conforme Categoria -->
+            <div class="space-y-1.5">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Preenchimento rápido:
+              </span>
+              @if (modalCategory() === 'acoes') {
+                <div class="flex flex-wrap gap-1.5">
+                  @for (st of availableStocks(); track st.ticker) {
+                    <button
+                      type="button"
+                      (click)="applyScrapedStockToForm(st)"
+                      class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer"
+                      [ngClass]="form.ticker.toUpperCase() === st.ticker
+                        ? 'bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem dark:text-ferrugem-300 border-ferrugem-300 dark:border-ferrugem-800'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'"
+                    >
+                      {{ st.ticker }}
+                    </button>
+                  }
+                </div>
+              } @else {
+                <div class="flex flex-wrap gap-1.5">
+                  @for (rf of fixedIncomePresets; track rf.ticker) {
+                    <button
+                      type="button"
+                      (click)="applyFixedIncomePreset(rf)"
+                      class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer"
+                      [ngClass]="form.ticker.toUpperCase() === rf.ticker
+                        ? 'bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem dark:text-ferrugem-300 border-ferrugem-300 dark:border-ferrugem-800'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'"
+                    >
+                      {{ rf.ticker }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <form (ngSubmit)="submitTransaction()" class="space-y-3.5">
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Ticker B3</label>
+                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    {{ modalCategory() === 'acoes' ? 'Ticker B3' : 'Código / Identificador' }}
+                  </label>
                   <input
                     type="text"
                     name="ticker"
                     [(ngModel)]="form.ticker"
                     required
-                    placeholder="Ex: PETR4"
+                    [placeholder]="modalCategory() === 'acoes' ? 'Ex: PETR4' : 'Ex: CDB-INTER-110'"
                     class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-ferrugem rounded-lg px-3.5 py-2 text-sm font-mono font-bold text-slate-900 dark:text-slate-100 uppercase outline-none"
                   />
                 </div>
                 <div>
-                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tipo de Ordem</label>
+                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Tipo de Ordem
+                  </label>
                   <select
                     name="tipo"
                     [(ngModel)]="form.tipo"
                     class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-ferrugem rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none"
                   >
-                    <option value="COMPRA">COMPRA</option>
-                    <option value="VENDA">VENDA</option>
+                    <option value="COMPRA">{{ modalCategory() === 'acoes' ? 'COMPRA' : 'APORTE (Compra)' }}</option>
+                    <option value="VENDA">{{ modalCategory() === 'acoes' ? 'VENDA' : 'RESGATE (Venda)' }}</option>
                   </select>
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Quantidade</label>
+                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    {{ modalCategory() === 'acoes' ? 'Quantidade' : 'Cotas / Unidades' }}
+                  </label>
                   <input
                     type="number"
                     name="quantidade"
@@ -304,7 +364,9 @@ interface SectorAllocation {
                   />
                 </div>
                 <div>
-                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Preço Unitário (R$)</label>
+                  <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Preço Unitário (R$)
+                  </label>
                   <input
                     type="number"
                     name="precoUnitario"
@@ -318,11 +380,25 @@ interface SectorAllocation {
               </div>
 
               <div class="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-                <span class="text-slate-600 dark:text-slate-400 font-medium">Valor Financeiro da Operação:</span>
+                <span class="text-slate-600 dark:text-slate-400 font-medium">Valor Total da Operação:</span>
                 <span class="tabular-nums font-bold text-slate-900 dark:text-slate-100 text-sm">
                   {{ (form.quantidade * form.precoUnitario) | currency:'BRL' }}
                 </span>
               </div>
+
+              @if (modalCategory() === 'renda_fixa') {
+                <div class="flex items-center justify-between text-[11px] pt-1">
+                  <span class="text-slate-500">Deseja simular o rendimento líquido?</span>
+                  <a
+                    routerLink="/calculadora-renda-fixa"
+                    (click)="showModal.set(false)"
+                    class="text-ferrugem font-semibold hover:underline flex items-center gap-0.5"
+                  >
+                    <span>Abrir Calculadora de Renda Fixa</span>
+                    <span>&rarr;</span>
+                  </a>
+                </div>
+              }
 
               <div class="flex justify-end gap-2 pt-2">
                 <button
@@ -352,6 +428,17 @@ export class PortfolioComponent implements OnInit {
   summary = signal<PortfolioSummary | null>(null);
   availableStocks = signal<StockDetail[]>([]);
   showModal = signal(false);
+  modalCategory = signal<'acoes' | 'renda_fixa'>('acoes');
+
+  readonly fixedIncomePresets = [
+    { ticker: 'CDB-DI-100', nome: 'CDB 100% CDI Diário', preco: 1000 },
+    { ticker: 'CDB-DI-110', nome: 'CDB 110% CDI Liquidez', preco: 1000 },
+    { ticker: 'LCI-DI-90', nome: 'LCI 90% CDI Isento', preco: 1000 },
+    { ticker: 'LCA-DI-92', nome: 'LCA 92% CDI Isento', preco: 1000 },
+    { ticker: 'TESOURO-SELIC', nome: 'Tesouro Selic 2029', preco: 15420.50 },
+    { ticker: 'TESOURO-IPCA', nome: 'Tesouro IPCA+ 2035', preco: 3410.80 },
+    { ticker: 'CRI-IPCA-6', nome: 'CRI IPCA + 6,5% a.a.', preco: 1000 },
+  ];
 
   readonly barColors = [
     'bg-ferrugem',
@@ -406,6 +493,23 @@ export class PortfolioComponent implements OnInit {
       this.applyScrapedStockToForm(first);
     }
     this.showModal.set(true);
+  }
+
+  setModalCategory(cat: 'acoes' | 'renda_fixa'): void {
+    this.modalCategory.set(cat);
+    if (cat === 'renda_fixa' && !this.form.ticker.includes('-')) {
+      this.applyFixedIncomePreset(this.fixedIncomePresets[0]);
+    } else if (cat === 'acoes' && this.availableStocks().length > 0) {
+      this.applyScrapedStockToForm(this.availableStocks()[0]);
+    }
+  }
+
+  applyFixedIncomePreset(preset: { ticker: string; nome: string; preco: number }): void {
+    this.form.ticker = preset.ticker;
+    this.form.precoUnitario = preset.preco;
+    if (this.form.quantidade <= 0) {
+      this.form.quantidade = 1;
+    }
   }
 
   applyScrapedStockToForm(stock: StockDetail): void {
