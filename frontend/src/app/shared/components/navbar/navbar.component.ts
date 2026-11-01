@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ScrapInvestApiService } from '../../../core/services/scrapinvest-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { StockDetail } from '../../../core/models/scrapinvest.models';
 
 @Component({
@@ -165,6 +166,44 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
               {{ theme.isDarkMode() ? 'light_mode' : 'dark_mode' }}
             </span>
           </button>
+
+          <!-- Seção de Autenticação / Usuário -->
+          @if (auth.isLoggedIn()) {
+            <div class="flex items-center gap-1.5 pl-2 border-l border-slate-200 dark:border-slate-800 shrink-0">
+              <div class="flex items-center gap-2 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
+                <span class="w-6 h-6 rounded-full bg-ferrugem text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                  {{ auth.currentUser()?.nome?.charAt(0)?.toUpperCase() || 'U' }}
+                </span>
+                <span class="font-medium text-slate-800 dark:text-slate-200 max-w-[90px] truncate hidden sm:inline" [title]="auth.currentUser()?.nome || ''">
+                  {{ auth.currentUser()?.nome }}
+                </span>
+              </div>
+              <button
+                type="button"
+                (click)="auth.logout()"
+                class="p-2 rounded-lg text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition text-xs font-semibold flex items-center gap-1"
+                title="Encerrar sessão"
+              >
+                <span class="material-icons text-base">logout</span>
+                <span class="hidden xl:inline text-[11px]">Sair</span>
+              </button>
+            </div>
+          } @else {
+            <div class="flex items-center gap-1.5 pl-2 border-l border-slate-200 dark:border-slate-800 shrink-0">
+              <a
+                routerLink="/login"
+                class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                Entrar
+              </a>
+              <a
+                routerLink="/cadastro"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-ferrugem hover:bg-ferrugem-700 transition shadow-xs hidden sm:inline-block"
+              >
+                Cadastrar
+              </a>
+            </div>
+          }
         </div>
       </div>
     </header>
@@ -174,6 +213,7 @@ export class NavbarComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly api = inject(ScrapInvestApiService);
   readonly theme = inject(ThemeService);
+  readonly auth = inject(AuthService);
 
   knownStocks = signal<StockDetail[]>([]);
   searchQuery = signal('');

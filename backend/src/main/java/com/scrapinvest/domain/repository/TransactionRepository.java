@@ -14,5 +14,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByUsuarioIdAndTickerIgnoreCaseOrderByDataTransacaoDescIdDesc(UUID usuarioId, String ticker);
 
+    boolean existsByUsuarioIdAndTickerIgnoreCase(UUID usuarioId, String ticker);
+
     void deleteByUsuarioIdAndTickerIgnoreCase(UUID usuarioId, String ticker);
 }

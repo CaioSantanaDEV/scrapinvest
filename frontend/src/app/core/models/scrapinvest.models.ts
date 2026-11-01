@@ -85,3 +85,28 @@ export interface PortfolioSummary {
   rentabilidadePercentualTotal: number;
   posicoes: PositionItem[];
 }
+
+export interface User {
+  id: string;
+  nome: string;
+  email: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  id: string;
+  nome: string;
+  email: string;
+}
+
+export interface RegisterRequest {
+  nome: string;
+  email: string;
+  senha: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  senha: string;
+}
+

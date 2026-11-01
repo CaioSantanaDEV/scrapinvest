@@ -2,9 +2,11 @@ package com.scrapinvest.controller;
 
 import com.scrapinvest.dto.StockDetailResponse;
 import com.scrapinvest.dto.TransactionResponse;
+import com.scrapinvest.security.UserPrincipal;
 import com.scrapinvest.service.PortfolioService;
 import com.scrapinvest.service.scraper.ScraperEngine;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,7 +52,9 @@ public class StockController {
     @GetMapping("/{ticker}/transactions")
     public ResponseEntity<List<TransactionResponse>> getStockTransactions(
             @PathVariable String ticker,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(required = false) UUID usuarioId) {
-        return ResponseEntity.ok(portfolioService.listTransactionsByTicker(usuarioId, ticker));
+        UUID effectiveId = userPrincipal != null ? userPrincipal.getId() : (usuarioId != null ? usuarioId : PortfolioService.DEFAULT_USER_ID);
+        return ResponseEntity.ok(portfolioService.listTransactionsByTicker(effectiveId, ticker));
     }
 }
