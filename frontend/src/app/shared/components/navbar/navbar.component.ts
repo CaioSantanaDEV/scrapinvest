@@ -14,8 +14,8 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
   template: `
     <header class="fixed top-0 inset-x-0 z-50 h-16 bg-white dark:bg-[#181818] border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-200">
       <div class="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-6 lg:gap-8">
-          <a routerLink="/dashboard" class="flex items-center gap-2.5 group">
+        <div class="flex items-center gap-4 lg:gap-6 shrink-0">
+          <a routerLink="/dashboard" class="flex items-center gap-2.5 group shrink-0">
             <!-- Logo Oficial ScrapInvest: Porca Hexagonal Laranja com Furo Central Transparente (Sem Bordas) -->
             <div class="w-9 h-9 flex items-center justify-center transition-transform group-hover:scale-105 shrink-0">
               <svg viewBox="0 0 100 100" class="w-full h-full" fill="none">
@@ -33,30 +33,30 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
                 Scrap<span class="text-ferrugem">Invest</span>
               </span>
               <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">
-                Terminal B3
+                Inteligência Financeira
               </span>
             </div>
           </a>
 
-          <nav class="hidden md:flex items-center gap-1.5">
+          <nav class="hidden md:flex items-center gap-1 shrink-0">
             <a
               routerLink="/dashboard"
               routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
-              class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
+              class="px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition whitespace-nowrap shrink-0"
             >
               Panorama
             </a>
             <a
               routerLink="/portfolio"
               routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
-              class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
+              class="px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition whitespace-nowrap shrink-0"
             >
               Minha Carteira
             </a>
             <a
               routerLink="/calculadora-renda-fixa"
               routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
-              class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition flex items-center gap-1"
+              class="px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition whitespace-nowrap shrink-0 flex items-center gap-1"
             >
               <span class="material-icons text-xs">savings</span>
               <span>Renda Fixa</span>
@@ -64,25 +64,34 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
             <a
               [routerLink]="['/stocks', 'PETR4']"
               routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
-              class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
+              class="px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition whitespace-nowrap shrink-0"
             >
               Análise de Papel
             </a>
             <a
               routerLink="/compare"
               routerLinkActive="bg-ferrugem-50 dark:bg-ferrugem-950/50 text-ferrugem border-ferrugem-200 dark:border-ferrugem-800/80 font-bold"
-              class="px-3.5 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
+              class="px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition whitespace-nowrap shrink-0"
             >
               Comparar
             </a>
           </nav>
         </div>
 
-        <div class="flex items-center gap-2 w-full max-w-sm sm:max-w-lg justify-end">
-          <div class="relative flex-1">
-            <form (ngSubmit)="onSearch()" class="flex items-center gap-1.5">
+        <div class="flex items-center gap-2 justify-end flex-1 min-w-0">
+          <!-- Barra de Busca Expansível Calibrada -->
+          <div
+            class="relative transition-all duration-300 ease-out z-20 shrink-0"
+            [ngClass]="searchFocused() 
+              ? 'w-full sm:w-[240px] md:w-[280px] lg:w-[340px] xl:w-[380px]' 
+              : 'w-28 sm:w-40 md:w-48 lg:w-56'"
+          >
+            <form (ngSubmit)="onSearch()" class="flex items-center gap-1.5 w-full">
               <div class="relative flex-1">
-                <span class="material-icons text-slate-400 dark:text-slate-500 text-base absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <span
+                  class="material-icons text-base absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors"
+                  [ngClass]="searchFocused() ? 'text-ferrugem' : 'text-slate-400 dark:text-slate-500'"
+                >
                   search
                 </span>
                 <input
@@ -90,33 +99,25 @@ import { StockDetail } from '../../../core/models/scrapinvest.models';
                   name="tickerSearch"
                   [ngModel]="searchQuery()"
                   (ngModelChange)="searchQuery.set($event)"
-                  (focus)="dropdownOpen.set(true)"
+                  (focus)="onFocusSearch()"
                   (blur)="closeDropdownDelayed()"
                   autocomplete="off"
-                  placeholder="Ex: PETR4 ou PETR4, VALE3, BBAS3..."
-                  class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-ferrugem dark:focus:border-ferrugem rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono uppercase outline-none transition"
+                  [placeholder]="searchFocused() ? 'Buscar ativo (ex: PETR4)...' : 'Buscar ativo...'"
+                  class="w-full bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:border-ferrugem dark:focus:border-ferrugem focus:ring-1 focus:ring-ferrugem/30 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 font-mono uppercase outline-none transition-all duration-200 shadow-xs"
                 />
               </div>
               <button
                 type="submit"
-                class="px-3.5 py-1.5 rounded-lg bg-ferrugem hover:bg-ferrugem-700 text-xs font-semibold text-white transition shrink-0 shadow-xs"
-                title="Consultar papel ou lista de papéis"
+                class="px-2.5 py-1.5 rounded-lg bg-ferrugem hover:bg-ferrugem-700 text-xs font-semibold text-white transition shrink-0 shadow-xs flex items-center gap-1 cursor-pointer"
+                title="Consultar ativo na B3"
               >
-                Consultar
-              </button>
-              <button
-                type="button"
-                (click)="onCompare()"
-                class="px-3 py-1.5 rounded-lg bg-ferrugem-50 dark:bg-ferrugem-950/40 hover:bg-ferrugem-100 dark:hover:bg-ferrugem-900/50 text-ferrugem border border-ferrugem-200 dark:border-ferrugem-800 text-xs font-semibold transition shrink-0 flex items-center gap-1"
-                title="Adicionar à planilha de comparação"
-              >
-                <span class="material-icons text-sm">compare_arrows</span>
-                <span class="hidden sm:inline">Comparar</span>
+                <span class="hidden xl:inline text-[11px]">Consultar</span>
+                <span class="material-icons text-sm">arrow_forward</span>
               </button>
             </form>
 
             @if (dropdownOpen() && (filteredSuggestions().length > 0 || searchQuery().trim().length >= 4)) {
-              <div class="absolute left-0 right-0 mt-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden z-50 divide-y divide-slate-100 dark:divide-slate-700/60">
+              <div class="absolute left-0 right-0 mt-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-50 divide-y divide-slate-100 dark:divide-slate-700/60">
                 @for (item of filteredSuggestions(); track item.ticker) {
                   <button
                     type="button"
@@ -218,6 +219,7 @@ export class NavbarComponent implements OnInit {
   knownStocks = signal<StockDetail[]>([]);
   searchQuery = signal('');
   dropdownOpen = signal(false);
+  searchFocused = signal(false);
 
   filteredSuggestions = computed(() => {
     const q = this.searchQuery().trim().toUpperCase();
@@ -279,7 +281,15 @@ export class NavbarComponent implements OnInit {
     this.router.navigate(['/stocks', clean]);
   }
 
+  onFocusSearch(): void {
+    this.searchFocused.set(true);
+    this.dropdownOpen.set(true);
+  }
+
   closeDropdownDelayed(): void {
-    setTimeout(() => this.dropdownOpen.set(false), 180);
+    setTimeout(() => {
+      this.searchFocused.set(false);
+      this.dropdownOpen.set(false);
+    }, 200);
   }
 }

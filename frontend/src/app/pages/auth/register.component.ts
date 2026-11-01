@@ -30,7 +30,7 @@ import { RegisterRequest } from '../../core/models/scrapinvest.models';
                 Scrap<span class="text-ferrugem">Invest</span>
               </span>
               <span class="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">
-                Terminal B3
+                Inteligência Financeira
               </span>
             </div>
           </div>
