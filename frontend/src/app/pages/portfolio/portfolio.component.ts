@@ -259,10 +259,12 @@ interface SectorAllocation {
                       <td class="py-3.5 px-4 text-center">
                         <button
                           type="button"
-                          (click)="prefillOrderForPosition(pos)"
-                          class="px-3 py-1 rounded-lg bg-ferrugem-50 dark:bg-ferrugem-950/40 hover:bg-ferrugem-100 dark:hover:bg-ferrugem-900/60 border border-ferrugem-200 dark:border-ferrugem-800/60 text-xs font-semibold text-ferrugem dark:text-ferrugem-300 transition cursor-pointer"
+                          (click)="openDeleteModal(pos)"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:text-white dark:hover:text-white bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-600 dark:hover:bg-rose-600 border border-rose-200 dark:border-rose-900/60 transition shadow-2xs cursor-pointer group text-xs font-semibold"
+                          [title]="'Excluir ' + pos.ticker + ' e todo o seu histórico de operações'"
                         >
-                          Operar
+                          <span class="material-icons text-base transition-transform group-hover:scale-110">delete</span>
+                          <span>Excluir</span>
                         </button>
                       </td>
                     </tr>
@@ -513,6 +515,78 @@ interface SectorAllocation {
           </div>
         </div>
       }
+
+      <!-- Modal Customizado de Confirmação de Exclusão -->
+      @if (positionToDelete(); as pos) {
+        <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div class="bg-white dark:bg-[#181818] border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl transition-colors">
+            <!-- Cabeçalho com Ícone de Alerta Vermelho -->
+            <div class="text-center space-y-2">
+              <div class="w-14 h-14 rounded-full bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto shadow-inner">
+                <span class="material-icons text-2xl">delete_forever</span>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Confirmar Exclusão de Posição
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
+                Tem certeza que deseja excluir esta posição da sua carteira? Todo o histórico de operações de <strong class="text-slate-800 dark:text-slate-200 font-mono">{{ pos.ticker }}</strong> será permanentemente removido.
+              </p>
+            </div>
+
+            <!-- Resumo do Ativo que será excluído -->
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md bg-ferrugem text-white font-mono font-bold tracking-tight text-xs">
+                    {{ pos.ticker }}
+                  </span>
+                  <span class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[170px]">
+                    {{ pos.nomeEmpresa }}
+                  </span>
+                </div>
+                <span class="text-slate-500 dark:text-slate-400">{{ pos.setor }}</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/70 dark:border-slate-800/80 text-[11px] tabular-nums">
+                <div>
+                  <span class="text-slate-400 dark:text-slate-500 block">Total em Custódia:</span>
+                  <span class="font-bold text-slate-900 dark:text-slate-100">{{ pos.quantidadeCustodia }} cotas</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-slate-400 dark:text-slate-500 block">Saldo Atualizado:</span>
+                  <span class="font-bold text-slate-900 dark:text-slate-100">{{ pos.patrimonioAtualizado | currency:'BRL' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botões de Ação do Modal -->
+            <div class="flex items-center justify-end gap-2.5 pt-1">
+              <button
+                type="button"
+                (click)="positionToDelete.set(null)"
+                [disabled]="isDeleting()"
+                class="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition cursor-pointer disabled:opacity-50 text-center"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                (click)="confirmDeletePosition()"
+                [disabled]="isDeleting()"
+                class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 text-center"
+              >
+                @if (isDeleting()) {
+                  <span class="material-icons text-sm animate-spin">refresh</span>
+                  <span>Excluindo...</span>
+                } @else {
+                  <span class="material-icons text-sm">delete</span>
+                  <span>Sim, Excluir</span>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -523,6 +597,8 @@ export class PortfolioComponent implements OnInit {
   availableStocks = signal<StockDetail[]>([]);
   showModal = signal(false);
   modalCategory = signal<'acoes' | 'renda_fixa'>('acoes');
+  positionToDelete = signal<PositionItem | null>(null);
+  isDeleting = signal(false);
 
   readonly fixedIncomePresets = [
     { ticker: 'CDB-DI-100', nome: 'CDB 100% CDI Diário', preco: 1000, indexador: 'CDI', taxaContratada: 100 },
@@ -535,7 +611,7 @@ export class PortfolioComponent implements OnInit {
   ];
 
   readonly barColors = [
-    'bg-[#AF4E22]',   // 1. Ferrugem ScrapInvest (Laranja marcante)
+    'bg-red-600',      // 1. Vermelho (Nova cor padrão inicial)
     'bg-blue-600',     // 2. Azul Royal
     'bg-emerald-500',  // 3. Verde Esmeralda
     'bg-purple-600',   // 4. Roxo Violeta
@@ -544,9 +620,9 @@ export class PortfolioComponent implements OnInit {
     'bg-pink-500',     // 7. Rosa Choque
     'bg-lime-500',     // 8. Verde Limão
     'bg-indigo-500',   // 9. Índigo Profundo
-    'bg-red-500',      // 10. Vermelho Vivo
-    'bg-teal-500',     // 11. Verde Petróleo
-    'bg-orange-400',   // 12. Laranja Claro
+    'bg-teal-500',     // 10. Verde Petróleo
+    'bg-orange-400',   // 11. Laranja Claro
+    'bg-[#AF4E22]',   // 12. Laranja Tema ScrapInvest (No fim da fila)
   ];
 
   form: TransactionRequest = {
@@ -665,6 +741,29 @@ export class PortfolioComponent implements OnInit {
     this.api.registerTransaction(this.form).subscribe(() => {
       this.showModal.set(false);
       this.loadPortfolio();
+    });
+  }
+
+  openDeleteModal(pos: PositionItem): void {
+    this.positionToDelete.set(pos);
+  }
+
+  confirmDeletePosition(): void {
+    const pos = this.positionToDelete();
+    if (!pos) return;
+
+    this.isDeleting.set(true);
+    this.api.deletePositionByTicker(pos.ticker).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.positionToDelete.set(null);
+        this.loadPortfolio();
+      },
+      error: (err) => {
+        this.isDeleting.set(false);
+        console.error('Erro ao excluir posição:', err);
+        alert('Não foi possível excluir a posição. Tente novamente.');
+      }
     });
   }
 }

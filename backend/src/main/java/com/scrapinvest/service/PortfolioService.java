@@ -78,6 +78,21 @@ public class PortfolioService {
     }
 
     @Transactional
+    public void deleteTransaction(Long id, UUID usuarioId) {
+        UUID userId = resolveUserId(usuarioId);
+        Transaction tx = transactionRepository.findById(id)
+                .filter(t -> t.getUsuarioId().equals(userId))
+                .orElseThrow(() -> new IllegalArgumentException("Transação não encontrada para o usuário"));
+        transactionRepository.delete(tx);
+    }
+
+    @Transactional
+    public void deletePositionByTicker(String ticker, UUID usuarioId) {
+        UUID userId = resolveUserId(usuarioId);
+        transactionRepository.deleteByUsuarioIdAndTickerIgnoreCase(userId, ticker.trim());
+    }
+
+    @Transactional
     public PortfolioSummaryResponse consolidatePortfolio(UUID usuarioId) {
         UUID userId = resolveUserId(usuarioId);
         List<Transaction> transactions = transactionRepository.findByUsuarioIdOrderByDataTransacaoAscIdAsc(userId);

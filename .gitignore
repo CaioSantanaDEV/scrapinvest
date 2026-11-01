@@ -1,8 +1,42 @@
+# IDEs & Editores
 .idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Java / Spring Boot / Maven
 target/
-backend/target/
-frontend/node_modules/
-frontend/dist/
-frontend/.angular/
-**/application-local.properties
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# Node.js / Angular
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.angular/
+**/.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Configurações locais sensíveis & Segredos
 .env
+.env.*
+**/application-local.properties
+**/application-local.yml
+**/application-local.yaml
+*.pem
+*.key
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+

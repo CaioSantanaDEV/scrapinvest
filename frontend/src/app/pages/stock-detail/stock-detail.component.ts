@@ -622,6 +622,7 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
                     <th class="py-3.5 px-4 text-right">Quantidade</th>
                     <th class="py-3.5 px-4 text-right">Preço Unitário</th>
                     <th class="py-3.5 px-4 text-right">Volume Total</th>
+                    <th class="py-3.5 px-4 text-center">Excluir</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-sm tabular-nums">
@@ -641,6 +642,16 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
                       <td class="py-3.5 px-4 text-right font-semibold text-slate-900 dark:text-slate-100">{{ tx.quantidade }}</td>
                       <td class="py-3.5 px-4 text-right text-slate-700 dark:text-slate-300">{{ tx.precoUnitario | currency:'BRL' }}</td>
                       <td class="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-slate-100">{{ tx.valorTotal | currency:'BRL' }}</td>
+                      <td class="py-3.5 px-4 text-center">
+                        <button
+                          type="button"
+                          (click)="deleteTransaction(tx.id)"
+                          class="inline-flex items-center justify-center p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:text-white dark:hover:text-white bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-600 dark:hover:bg-rose-600 border border-rose-200 dark:border-rose-900/60 transition shadow-2xs cursor-pointer group"
+                          title="Excluir esta operação"
+                        >
+                          <span class="material-icons text-sm transition-transform group-hover:scale-110">delete</span>
+                        </button>
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -924,6 +935,25 @@ export class StockDetailComponent implements OnInit {
     this.api.registerTransaction(this.orderForm).subscribe(() => {
       this.showOrderModal.set(false);
       this.loadTickerData(s.ticker);
+    });
+  }
+
+  deleteTransaction(id: number): void {
+    const s = this.stock();
+    if (!s) return;
+    const confirmed = window.confirm('Deseja realmente excluir esta operação do histórico?');
+    if (!confirmed) return;
+
+    this.api.deleteTransaction(id).subscribe({
+      next: () => {
+        this.api
+          .getTransactionsByTicker(s.ticker)
+          .subscribe((txs) => this.transactions.set(txs));
+      },
+      error: (err) => {
+        console.error('Erro ao excluir transação:', err);
+        alert('Não foi possível excluir a operação.');
+      }
     });
   }
 

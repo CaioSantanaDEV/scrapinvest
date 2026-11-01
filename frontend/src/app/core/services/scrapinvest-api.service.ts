@@ -13,7 +13,9 @@ import {
 })
 export class ScrapInvestApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = typeof window !== 'undefined' && window.location.port === '4200'
+    ? 'http://localhost:8080/api'
+    : '/api';
 
   readonly comparisonTickers = signal<string[]>([]);
   readonly comparedStocks = signal<StockDetail[]>([]);
@@ -107,5 +109,13 @@ export class ScrapInvestApiService {
       `${this.baseUrl}/portfolio/transactions`,
       payload
     );
+  }
+
+  deleteTransaction(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/portfolio/transactions/${id}`);
+  }
+
+  deletePositionByTicker(ticker: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/portfolio/positions/${encodeURIComponent(ticker.trim().toUpperCase())}`);
   }
 }

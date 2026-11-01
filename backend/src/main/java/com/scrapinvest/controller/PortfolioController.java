@@ -33,4 +33,20 @@ public class PortfolioController {
         TransactionResponse created = portfolioService.registerTransaction(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
+    @DeleteMapping("/transactions/{id}")
+    public ResponseEntity<Void> deleteTransaction(
+            @PathVariable Long id,
+            @RequestParam(required = false) UUID usuarioId) {
+        portfolioService.deleteTransaction(id, usuarioId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/positions/{ticker}")
+    public ResponseEntity<Void> deletePositionByTicker(
+            @PathVariable String ticker,
+            @RequestParam(required = false) UUID usuarioId) {
+        portfolioService.deletePositionByTicker(ticker, usuarioId);
+        return ResponseEntity.noContent().build();
+    }
 }

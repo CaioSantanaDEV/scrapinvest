@@ -1,0 +1,74 @@
+services:
+  # =========================================================================
+  # 1. Banco de Dados Relacional (PostgreSQL 16)
+  # =========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: scrapinvest-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: scrapinvest
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d scrapinvest"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - scrapinvest-net
+
+  # =========================================================================
+  # 2. Backend Spring Boot (API REST + Scraper Fundamentus + Flyway)
+  # =========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scrapinvest-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/scrapinvest
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      SERVER_PORT: 8080
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://localhost:80,http://localhost"
+    ports:
+      - "${BACKEND_PORT:-8081}:8080"
+    networks:
+      - scrapinvest-net
+
+  # =========================================================================
+  # 3. Frontend Angular (Interface Web Nginx)
+  # =========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scrapinvest-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "4200:80"
+    networks:
+      - scrapinvest-net
+
+# =========================================================================
+# Volumes & Networks Persistentes
+# =========================================================================
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  scrapinvest-net:
+    driver: bridge
