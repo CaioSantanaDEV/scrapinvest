@@ -117,6 +117,25 @@ public class DataInitializer implements CommandLineRunner {
             ));
         }
 
+        if (!transactionRepository.existsByUsuarioIdAndTickerIgnoreCase(PortfolioService.DEFAULT_USER_ID, "HGLG11")) {
+            log.info("Adicionando Fundo Imobiliário HGLG11 para a conta demo...");
+            try {
+                scraperEngine.getOrScrapeStock("HGLG11");
+            } catch (Exception e) {
+                log.warn("Não foi possível coletar HGLG11 no Fundamentus: {}", e.getMessage());
+            }
+            transactionRepository.save(new Transaction(
+                    PortfolioService.DEFAULT_USER_ID,
+                    "HGLG11",
+                    TransactionType.COMPRA,
+                    25,
+                    new BigDecimal("158.0000"),
+                    dataPassada.plusMonths(2),
+                    null,
+                    null
+            ));
+        }
+
         log.info("Inicialização da conta de demonstração concluída!");
     }
 }

@@ -279,7 +279,7 @@ export class StockComparisonComponent implements OnInit {
   newTickerInput = '';
 
   readonly popularSuggestions = signal<string[]>([
-    'PETR4', 'VALE3', 'BBAS3', 'ITUB4', 'WEGE3', 'MGLU3', 'RIAA3', 'XPML11'
+    'PETR4', 'VALE3', 'BBAS3', 'ITUB4', 'WEGE3', 'HGLG11', 'XPML11'
   ]);
 
   // Seções e linhas da comparação lado a lado
@@ -371,6 +371,16 @@ export class StockComparisonComponent implements OnInit {
         { label: 'Receita Líquida (3 meses)', getValue: (s) => this.extractDre(s, 'Receita Líquida', 1) },
         { label: 'EBIT (3 meses)', getValue: (s) => this.extractDre(s, 'EBIT', 1) },
         { label: 'Lucro Líquido (3 meses)', getValue: (s) => this.extractDre(s, 'Lucro Líquido', 1) },
+      ],
+    },
+    {
+      title: '7. Métricas Especializadas de FIIs',
+      icon: 'apartment',
+      rows: [
+        { label: 'Segmento FII', getValue: (s) => s.segmentoFii || (s.tipoAtivo === 'FII' ? s.setor : '-') },
+        { label: 'Último Rendimento (R$)', getValue: (s) => s.ultimoRendimento != null ? 'R$ ' + Number(s.ultimoRendimento).toFixed(2) : '-' },
+        { label: 'Vacância Física (%)', getValue: (s) => s.vacanciaFisica != null ? Number(s.vacanciaFisica).toFixed(1) + '%' : '-' },
+        { label: 'Qtd de Imóveis', getValue: (s) => s.quantidadeImoveis != null ? String(s.quantidadeImoveis) : '-' },
       ],
     },
   ];

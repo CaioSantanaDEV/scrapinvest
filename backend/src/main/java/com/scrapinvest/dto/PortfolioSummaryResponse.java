@@ -1,5 +1,7 @@
 package com.scrapinvest.dto;
 
+import com.scrapinvest.domain.entity.AssetType;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -17,6 +19,7 @@ public record PortfolioSummaryResponse(
             String ticker,
             String nomeEmpresa,
             String setor,
+            AssetType tipoAtivo,
             int quantidadeCustodia,
             BigDecimal precoMedio,
             BigDecimal cotacaoAtual,

@@ -126,7 +126,20 @@ interface SectorAllocation {
             </div>
 
             <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
-              <h2 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Distribuição por Setor</h2>
+              <div class="flex items-center justify-between">
+                <h2 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Distribuição por Classes & Setores</h2>
+              </div>
+
+              <!-- Pílulas de Classes de Ativos (Ações, FIIs, Renda Fixa) -->
+              <div class="grid grid-cols-3 gap-2 pb-2 border-b border-slate-100 dark:border-slate-800 text-center">
+                @for (cls of assetClassAllocations(); track cls.classe) {
+                  <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700">
+                    <span class="text-[10px] uppercase font-semibold text-slate-500 dark:text-slate-400 block truncate">{{ cls.classe }}</span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-slate-100 tabular-nums">{{ cls.percentual | number:'1.1-1' }}%</span>
+                  </div>
+                }
+              </div>
+
               <div class="space-y-3">
                 @for (sec of sectorAllocations(); track sec.setor; let i = $index) {
                   <div class="space-y-1">
@@ -182,12 +195,27 @@ interface SectorAllocation {
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                       <td class="py-3.5 px-4 text-left min-w-[250px]">
                         <div class="flex items-start gap-2.5">
-                          <a
-                            [routerLink]="pos.setor === 'Renda Fixa' ? '/calculadora-renda-fixa' : ['/stocks', pos.ticker]"
-                            class="px-2 py-0.5 rounded-lg bg-ferrugem text-white font-mono font-bold tracking-tight text-xs hover:bg-ferrugem-700 transition shadow-xs mt-0.5 shrink-0"
-                          >
-                            {{ pos.ticker }}
-                          </a>
+                          <div class="flex flex-col items-start gap-1 mt-0.5 shrink-0">
+                            <a
+                              [routerLink]="pos.setor === 'Renda Fixa' ? '/calculadora-renda-fixa' : ['/stocks', pos.ticker]"
+                              class="px-2 py-0.5 rounded-lg bg-ferrugem text-white font-mono font-bold tracking-tight text-xs hover:bg-ferrugem-700 transition shadow-xs text-center w-full"
+                            >
+                              {{ pos.ticker }}
+                            </a>
+                            @if (pos.tipoAtivo === 'FII' || pos.ticker.endsWith('11') || pos.setor.includes('FII')) {
+                              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 self-center">
+                                FII
+                              </span>
+                            } @else if (pos.tipoAtivo === 'RENDA_FIXA' || pos.setor === 'Renda Fixa') {
+                              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 self-center">
+                                RENDA FIXA
+                              </span>
+                            } @else {
+                              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 self-center">
+                                AÇÃO
+                              </span>
+                            }
+                          </div>
                           <div class="min-w-0">
                             <p class="font-semibold text-slate-900 dark:text-slate-100 text-xs truncate">{{ pos.nomeEmpresa }}</p>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ pos.setor }}</p>
@@ -634,6 +662,34 @@ export class PortfolioComponent implements OnInit {
     indexador: 'CDI',
     taxaContratada: 100,
   };
+
+  assetClassAllocations = computed<{ classe: string; valor: number; percentual: number }[]>(() => {
+    const s = this.summary();
+    if (!s || !s.posicoes.length || s.patrimonioAtualizadoTotal <= 0) {
+      return [];
+    }
+    let acoesVal = 0;
+    let fiisVal = 0;
+    let rfVal = 0;
+
+    for (const pos of s.posicoes) {
+      const val = Number(pos.patrimonioAtualizado);
+      if (pos.tipoAtivo === 'FII' || pos.ticker.endsWith('11') || (pos.setor && pos.setor.includes('FII'))) {
+        fiisVal += val;
+      } else if (pos.tipoAtivo === 'RENDA_FIXA' || (pos.setor && pos.setor.includes('Renda Fixa'))) {
+        rfVal += val;
+      } else {
+        acoesVal += val;
+      }
+    }
+
+    const total = Number(s.patrimonioAtualizadoTotal);
+    const result: { classe: string; valor: number; percentual: number }[] = [];
+    if (acoesVal > 0) result.push({ classe: 'Ações', valor: acoesVal, percentual: (acoesVal / total) * 100 });
+    if (fiisVal > 0) result.push({ classe: 'FIIs', valor: fiisVal, percentual: (fiisVal / total) * 100 });
+    if (rfVal > 0) result.push({ classe: 'Renda Fixa', valor: rfVal, percentual: (rfVal / total) * 100 });
+    return result;
+  });
 
   sectorAllocations = computed<SectorAllocation[]>(() => {
     const s = this.summary();

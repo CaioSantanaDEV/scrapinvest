@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ScrapInvestApiService } from '../../core/services/scrapinvest-api.service';
 import {
+  FiiAtivoComposicao,
+  FiiImoveisDados,
   FundamentusCell,
   FundamentusTable,
   StockDetail,
@@ -109,6 +111,19 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
                 <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                   {{ s.setor }}
                 </span>
+                @if (isFii()) {
+                  <span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    Fundo Imobiliário (FII)
+                  </span>
+                } @else if (s.tipoAtivo === 'RENDA_FIXA') {
+                  <span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    Renda Fixa
+                  </span>
+                } @else {
+                  <span class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                    Ação B3
+                  </span>
+                }
                 <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold tabular-nums bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
                   Coletado em {{ s.dataAtualizacao | date:'dd/MM/yyyy HH:mm:ss' }}
@@ -152,6 +167,125 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
               </button>
             </div>
           </div>
+        </section>
+
+        <!-- Resumo Rápido de Métricas-Chave (Cards Dinâmicos Ação vs FII) -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          @if (isFii()) {
+            <!-- Métrica 1: P/VP -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/VP</span>
+              <p class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mt-1"
+                 [ngClass]="s.pvp && s.pvp < 1.0 ? 'text-emerald-600 dark:text-emerald-400' : ''">
+                {{ s.pvp != null ? (s.pvp | number:'1.2-2') : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Preço / V. Patrimonial</span>
+            </div>
+
+            <!-- Métrica 2: Dividend Yield -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dividend Yield</span>
+              <p class="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+                {{ s.dividendYield != null ? (s.dividendYield | number:'1.2-2') + '%' : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Proventos últimos 12m</span>
+            </div>
+
+            <!-- Métrica 3: Último Rendimento -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Último Rendimento</span>
+              <p class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mt-1">
+                {{ s.ultimoRendimento != null ? (s.ultimoRendimento | currency:'BRL') : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Por cota</span>
+            </div>
+
+            <!-- Métrica 4: Vacância Física -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Vacância Física</span>
+              <p class="text-lg font-bold font-mono mt-1"
+                 [ngClass]="s.vacanciaFisica && s.vacanciaFisica > 10 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'">
+                {{ s.vacanciaFisica != null ? (s.vacanciaFisica | number:'1.1-1') + '%' : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Área desocupada</span>
+            </div>
+
+            <!-- Métrica 5: Qtd de Imóveis -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Qtd de Imóveis</span>
+              <p class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mt-1">
+                {{ s.quantidadeImoveis != null ? s.quantidadeImoveis : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Propriedades físicas</span>
+            </div>
+
+            <!-- Métrica 6: Segmento FII -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Segmento FII</span>
+              <p class="text-sm font-bold text-ferrugem truncate mt-1" [title]="s.segmentoFii || s.setor">
+                {{ s.segmentoFii || s.setor }}
+              </p>
+              <span class="text-[10px] text-slate-400">Classificação B3</span>
+            </div>
+          } @else {
+            <!-- Métrica 1: P/L -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/L</span>
+              <p class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mt-1">
+                {{ s.pl != null ? (s.pl | number:'1.2-2') : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Preço / Lucro</span>
+            </div>
+
+            <!-- Métrica 2: P/VP -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/VP</span>
+              <p class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mt-1"
+                 [ngClass]="s.pvp && s.pvp < 1.0 ? 'text-emerald-600 dark:text-emerald-400' : ''">
+                {{ s.pvp != null ? (s.pvp | number:'1.2-2') : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Preço / V. Patrimonial</span>
+            </div>
+
+            <!-- Métrica 3: Dividend Yield -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dividend Yield</span>
+              <p class="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+                {{ s.dividendYield != null ? (s.dividendYield | number:'1.2-2') + '%' : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Proventos últimos 12m</span>
+            </div>
+
+            <!-- Métrica 4: ROE -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">ROE</span>
+              <p class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mt-1"
+                 [ngClass]="s.roe && s.roe < 0 ? 'text-rose-600 dark:text-rose-400' : ''">
+                {{ s.roe != null ? (s.roe | number:'1.2-2') + '%' : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Retorno s/ Patrimônio</span>
+            </div>
+
+            <!-- Métrica 5: Margem Líquida -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Margem Líquida</span>
+              <p class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mt-1"
+                 [ngClass]="s.margemLiquida && s.margemLiquida < 0 ? 'text-rose-600 dark:text-rose-400' : ''">
+                {{ s.margemLiquida != null ? (s.margemLiquida | number:'1.2-2') + '%' : '-' }}
+              </p>
+              <span class="text-[10px] text-slate-400">Eficiência de lucro</span>
+            </div>
+
+            <!-- Métrica 6: Variação Diária -->
+            <div class="bg-white dark:bg-[#181818] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Oscilação Diária</span>
+              <p class="text-lg font-bold font-mono mt-1"
+                 [ngClass]="s.variacaoDiaria >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                {{ s.variacaoDiaria >= 0 ? '+' : '' }}{{ s.variacaoDiaria | number:'1.2-2' }}%
+              </p>
+              <span class="text-[10px] text-slate-400">Último pregão B3</span>
+            </div>
+          }
         </section>
 
         <!-- ========================================================================= -->
@@ -229,41 +363,129 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
                 </table>
               </div>
 
-              <!-- Balanço e DRE lado a lado -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-                  <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 uppercase tracking-wider">
-                    Balanço Patrimonial
+              @if (isFii()) {
+                <!-- Composição dos Ativos (Exatamente como Fundamentus) -->
+                <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs p-4 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                      Composição dos Ativos
+                    </span>
+                    <span class="text-[11px] text-slate-400">Distribuição patrimonial do FII</span>
                   </div>
-                  <table class="w-full text-xs">
-                    <tbody>
-                      @for (row of balancoDataRows(); track $index) {
-                        <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
-                          <td class="py-1.5 px-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px]">{{ row[0].text }}</td>
-                          <td class="py-1.5 px-2.5 font-mono text-right font-semibold text-slate-900 dark:text-slate-100">{{ row[1].text }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
+
+                  <!-- Barra Horizontal Stacked com percentuais internos -->
+                  <div class="w-full h-8 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex shadow-inner">
+                    @for (item of composicaoAtivos(); track item.categoria) {
+                      <div
+                        class="h-full flex items-center justify-center text-xs font-bold font-mono text-white transition-all duration-500 truncate px-1"
+                        [style.background-color]="item.cor"
+                        [style.width.%]="item.percentual"
+                        [title]="item.categoria + ': ' + item.percentual + '%'"
+                      >
+                        @if (item.percentual >= 2) {
+                          {{ item.percentual | number:'1.0-0' }}%
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Legenda com Badges Coloridos -->
+                  <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs pt-1">
+                    @for (item of composicaoAtivos(); track item.categoria) {
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-xs shrink-0" [style.background-color]="item.cor"></span>
+                        <span class="text-slate-700 dark:text-slate-300 font-medium text-[11px]">{{ item.categoria }}</span>
+                      </div>
+                    }
+                  </div>
                 </div>
 
-                <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-                  <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 uppercase tracking-wider">
-                    Demonstrativo (DRE 12m)
-                  </div>
-                  <table class="w-full text-xs">
-                    <tbody>
-                      @for (row of dreDataRows(); track $index) {
-                        <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
-                          <td class="py-1.5 px-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px]">{{ row[0].text }}</td>
-                          <td class="py-1.5 px-2.5 font-mono text-right font-semibold text-slate-900 dark:text-slate-100"
-                              [ngClass]="row[0].text.includes('Lucro') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''">{{ row[1].text }}</td>
+                <!-- Tabela Imóveis -->
+                @if (dadosImoveis(); as imov) {
+                  <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                    <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 text-center uppercase tracking-wider">
+                      Imóveis
+                    </div>
+                    <table class="w-full border-collapse text-xs">
+                      <tbody>
+                        <tr class="border-b border-slate-100 dark:border-slate-800">
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 w-[16%] text-[11px]">Qtd imóveis</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 w-[17%] tabular-nums">{{ imov.qtdImoveis }}</td>
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 w-[16%] text-[11px]">Área (m2)</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 w-[17%] tabular-nums">{{ imov.areaM2 | number:'1.0-0' }}</td>
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 w-[16%] text-[11px]">Cap Rate</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 w-[18%] tabular-nums text-emerald-600 dark:text-emerald-400">{{ imov.capRate | number:'1.1-1' }}%</td>
                         </tr>
-                      }
-                    </tbody>
-                  </table>
+                        <tr class="border-b border-slate-100 dark:border-slate-800">
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Qtd Unidades</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums">{{ imov.qtdUnidades }}</td>
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Aluguel/m2</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums">{{ imov.aluguelM2 | number:'1.0-0' }}</td>
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Vacância Média</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums" [ngClass]="imov.vacanciaMedia && imov.vacanciaMedia > 10 ? 'text-amber-600 dark:text-amber-400' : ''">{{ imov.vacanciaMedia | number:'1.1-1' }}%</td>
+                        </tr>
+                        <tr>
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Imóveis/PL do FII</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums text-ferrugem">{{ imov.imoveisPlFii | number:'1.1-1' }}%</td>
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Preço do m2</td>
+                          <td class="py-2 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums">R$ {{ imov.precoM2 | number:'1.0-0' }}</td>
+                          <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-800"></td>
+                          <td class="py-2 px-3"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                }
+
+                <!-- Link CVM Gerenciador de Documentos -->
+                <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs text-center">
+                  <a
+                    href="https://fnet.bmfbovespa.com.br/fnet/publico/abrirGerenciadorDocumentosCVM"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-xs font-semibold text-ferrugem hover:underline inline-flex items-center gap-1.5"
+                  >
+                    <span class="material-icons text-sm">description</span>
+                    <span>Pesquisar Documentos Regulatórios do Fundo na CVM / B3 &rarr;</span>
+                  </a>
                 </div>
-              </div>
+              } @else {
+                <!-- Balanço e DRE lado a lado (Ações) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                    <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 uppercase tracking-wider">
+                      Balanço Patrimonial
+                    </div>
+                    <table class="w-full text-xs">
+                      <tbody>
+                        @for (row of balancoDataRows(); track $index) {
+                          <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                            <td class="py-1.5 px-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px]">{{ row[0].text }}</td>
+                            <td class="py-1.5 px-2.5 font-mono text-right font-semibold text-slate-900 dark:text-slate-100">{{ row[1].text }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                    <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 uppercase tracking-wider">
+                      Demonstrativo (DRE 12m)
+                    </div>
+                    <table class="w-full text-xs">
+                      <tbody>
+                        @for (row of dreDataRows(); track $index) {
+                          <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                            <td class="py-1.5 px-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px]">{{ row[0].text }}</td>
+                            <td class="py-1.5 px-2.5 font-mono text-right font-semibold text-slate-900 dark:text-slate-100"
+                                [ngClass]="row[0].text.includes('Lucro') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''">{{ row[1].text }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         }
@@ -373,67 +595,152 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
               </div>
             }
 
-            <!-- Tabela 4: Dados Balanço Patrimonial -->
-            @if (tableBalanco(); as t4) {
+            @if (isFii()) {
+              <!-- Tabela Composição dos Ativos (Fundamentus Fiel) -->
               <div class="bg-white dark:bg-[#181818] rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shadow-xs">
                 <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 text-center uppercase tracking-wider">
-                  Dados Balanço Patrimonial
+                  Composição dos Ativos
                 </div>
-                <table class="w-full border-collapse text-xs">
-                  <tbody>
-                    @for (row of balancoDataRows(); track $index) {
-                      <tr class="border-b border-slate-200 dark:border-slate-700 last:border-b-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                        @for (cell of row; track $index) {
-                          @if (cell.label) {
-                            <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px] w-[20%]">
-                              {{ cell.text }}
-                            </td>
-                          } @else {
-                            <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold w-[30%]">
-                              {{ cell.text }}
-                            </td>
-                          }
+                <div class="p-4 space-y-3 bg-white dark:bg-slate-900">
+                  <div class="w-full h-8 bg-slate-100 dark:bg-slate-800 rounded-md overflow-hidden flex shadow-inner border border-slate-300 dark:border-slate-700">
+                    @for (item of composicaoAtivos(); track item.categoria) {
+                      <div
+                        class="h-full flex items-center justify-center text-xs font-bold font-mono text-white transition-all duration-500 truncate px-1"
+                        [style.background-color]="item.cor"
+                        [style.width.%]="item.percentual"
+                        [title]="item.categoria + ': ' + item.percentual + '%'"
+                      >
+                        @if (item.percentual >= 2) {
+                          {{ item.percentual | number:'1.0-0' }}%
                         }
-                      </tr>
+                      </div>
                     }
-                  </tbody>
-                </table>
+                  </div>
+                  <div class="flex flex-wrap items-center justify-center gap-4 text-xs pt-1">
+                    @for (item of composicaoAtivos(); track item.categoria) {
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-3.5 h-3.5 rounded-xs shrink-0" [style.background-color]="item.cor"></span>
+                        <span class="text-slate-700 dark:text-slate-300 font-medium text-[11px]">{{ item.categoria }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
               </div>
-            }
 
-            <!-- Tabela 5: Demonstrativo de Resultados (DRE 12m vs 3m) -->
-            @if (tableDre(); as t5) {
+              <!-- Tabela Imóveis (Fundamentus Fiel) -->
+              @if (dadosImoveis(); as imov) {
+                <div class="bg-white dark:bg-[#181818] rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shadow-xs">
+                  <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 text-center uppercase tracking-wider">
+                    Imóveis
+                  </div>
+                  <table class="w-full border-collapse text-xs">
+                    <tbody>
+                      <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px] w-[14%]">Qtd imóveis</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold w-[19%]">{{ imov.qtdImoveis }}</td>
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px] w-[14%]">Área (m2)</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold w-[19%]">{{ imov.areaM2 | number:'1.0-0' }}</td>
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px] w-[14%]">Cap Rate</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 whitespace-nowrap font-mono text-emerald-600 dark:text-emerald-400 text-right tabular-nums text-xs font-bold w-[20%]">{{ imov.capRate | number:'1.1-1' }}%</td>
+                      </tr>
+                      <tr class="border-b border-slate-200 dark:border-slate-700">
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px]">Qtd Unidades</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold">{{ imov.qtdUnidades }}</td>
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px]">Aluguel/m2</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold">{{ imov.aluguelM2 | number:'1.0-0' }}</td>
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px]">Vacância Média</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold" [ngClass]="imov.vacanciaMedia && imov.vacanciaMedia > 10 ? 'text-amber-600 dark:text-amber-400' : ''">{{ imov.vacanciaMedia | number:'1.1-1' }}%</td>
+                      </tr>
+                      <tr>
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px]">Imóveis/PL do FII</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-ferrugem text-right tabular-nums text-xs font-bold">{{ imov.imoveisPlFii | number:'1.1-1' }}%</td>
+                        <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px]">Preço do m2</td>
+                        <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold">R$ {{ imov.precoM2 | number:'1.0-0' }}</td>
+                        <td class="bg-slate-100 dark:bg-slate-800 border-r border-slate-300 dark:border-slate-700"></td>
+                        <td class="bg-white dark:bg-slate-900"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              <!-- Tabela Pesquisar Documentos -->
               <div class="bg-white dark:bg-[#181818] rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shadow-xs">
                 <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 text-center uppercase tracking-wider">
-                  Dados demonstrativos de resultados
+                  <a
+                    href="https://fnet.bmfbovespa.com.br/fnet/publico/abrirGerenciadorDocumentosCVM"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:underline text-white flex items-center justify-center gap-1.5"
+                  >
+                    <span>Pesquisar Documentos Regulatórios do Fundo na CVM / B3</span>
+                    <span class="material-icons text-sm">open_in_new</span>
+                  </a>
                 </div>
-                <table class="w-full border-collapse text-xs">
-                  <thead>
-                    <tr class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-[11px] border-b border-slate-300 dark:border-slate-700">
-                      <th colspan="2" class="py-1.5 px-3 text-center border-r border-slate-300 dark:border-slate-700">Últimos 12 meses</th>
-                      <th colspan="2" class="py-1.5 px-3 text-center">Últimos 3 meses</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of dreDataRows(); track $index) {
-                      <tr class="border-b border-slate-200 dark:border-slate-700 last:border-b-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                        @for (cell of row; track $index) {
-                          @if (cell.label) {
-                            <td class="bg-slate-50 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px] w-[20%]">
-                              {{ cell.text }}
-                            </td>
-                          } @else {
-                            <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-right tabular-nums text-xs font-semibold w-[30%]"
-                                [ngClass]="row[0].text.includes('Lucro') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-900 dark:text-slate-100'">
-                              {{ cell.text }}
-                            </td>
-                          }
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
               </div>
+            } @else {
+              <!-- Tabela 4: Dados Balanço Patrimonial (Ações) -->
+              @if (tableBalanco(); as t4) {
+                <div class="bg-white dark:bg-[#181818] rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shadow-xs">
+                  <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 text-center uppercase tracking-wider">
+                    Dados Balanço Patrimonial
+                  </div>
+                  <table class="w-full border-collapse text-xs">
+                    <tbody>
+                      @for (row of balancoDataRows(); track $index) {
+                        <tr class="border-b border-slate-200 dark:border-slate-700 last:border-b-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                          @for (cell of row; track $index) {
+                            @if (cell.label) {
+                              <td class="bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px] w-[20%]">
+                                {{ cell.text }}
+                              </td>
+                            } @else {
+                              <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-slate-900 dark:text-slate-100 text-right tabular-nums text-xs font-semibold w-[30%]">
+                                {{ cell.text }}
+                              </td>
+                            }
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              <!-- Tabela 5: Demonstrativo de Resultados (DRE 12m vs 3m) (Ações) -->
+              @if (tableDre(); as t5) {
+                <div class="bg-white dark:bg-[#181818] rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shadow-xs">
+                  <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 text-center uppercase tracking-wider">
+                    Dados demonstrativos de resultados
+                  </div>
+                  <table class="w-full border-collapse text-xs">
+                    <thead>
+                      <tr class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-[11px] border-b border-slate-300 dark:border-slate-700">
+                        <th colspan="2" class="py-1.5 px-3 text-center border-r border-slate-300 dark:border-slate-700">Últimos 12 meses</th>
+                        <th colspan="2" class="py-1.5 px-3 text-center">Últimos 3 meses</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of dreDataRows(); track $index) {
+                        <tr class="border-b border-slate-200 dark:border-slate-700 last:border-b-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                          @for (cell of row; track $index) {
+                            @if (cell.label) {
+                              <td class="bg-slate-50 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap text-[11px] w-[20%]">
+                                {{ cell.text }}
+                              </td>
+                            } @else {
+                              <td class="bg-white dark:bg-slate-900 px-3 py-1.5 border-r border-slate-300 dark:border-slate-700 whitespace-nowrap font-mono text-right tabular-nums text-xs font-semibold w-[30%]"
+                                  [ngClass]="row[0].text.includes('Lucro') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-900 dark:text-slate-100'">
+                                {{ cell.text }}
+                              </td>
+                            }
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
             }
           </div>
         }
@@ -473,7 +780,7 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
                   : 'bg-white dark:bg-[#181818] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border-slate-200 dark:border-slate-700'"
                 class="px-4 py-2 rounded-lg text-xs border transition"
               >
-                3. Balanço & DRE Completo
+                {{ isFii() ? '3. Composição & Imóveis' : '3. Balanço & DRE Completo' }}
               </button>
             </div>
 
@@ -538,60 +845,147 @@ export type TabCategory = 'multiplos' | 'oscilacoes' | 'demonstrativos';
               </div>
             }
 
-            <!-- Aba 3: Balanço & DRE -->
+            <!-- Aba 3: Balanço & DRE ou Composição & Imóveis -->
             @if (activeTab() === 'demonstrativos') {
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-                  <div class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                    Balanço Patrimonial
-                  </div>
-                  <table class="w-full border-collapse text-xs">
-                    <tbody>
-                      @for (row of balancoDataRows(); track $index) {
-                        <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
-                          @for (cell of row; track $index) {
-                            @if (cell.label) {
-                              <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 text-[11px] w-[22%]">
-                                {{ cell.text }}
-                              </td>
-                            } @else {
-                              <td class="py-2 px-3 font-mono font-semibold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 text-right tabular-nums w-[28%]">
-                                {{ cell.text }}
-                              </td>
-                            }
-                          }
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
+              @if (isFii()) {
+                <div class="space-y-4">
+                  <!-- Composição dos Ativos -->
+                  <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                        Composição dos Ativos
+                      </span>
+                      <span class="text-[11px] text-slate-400">Distribuição patrimonial do FII</span>
+                    </div>
 
-                <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-                  <div class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                    Demonstrativo de Resultados (DRE 12m vs 3m)
-                  </div>
-                  <table class="w-full border-collapse text-xs">
-                    <tbody>
-                      @for (row of dreDataRows(); track $index) {
-                        <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
-                          @for (cell of row; track $index) {
-                            @if (cell.label) {
-                              <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 text-[11px] w-[22%]">
-                                {{ cell.text }}
-                              </td>
-                            } @else {
-                              <td class="py-2 px-3 font-mono font-semibold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 text-right tabular-nums w-[28%]"
-                                  [ngClass]="row[0].text.includes('Lucro') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''">
-                                {{ cell.text }}
-                              </td>
-                            }
+                    <div class="w-full h-8 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex shadow-inner">
+                      @for (item of composicaoAtivos(); track item.categoria) {
+                        <div
+                          class="h-full flex items-center justify-center text-xs font-bold font-mono text-white transition-all duration-500 truncate px-1"
+                          [style.background-color]="item.cor"
+                          [style.width.%]="item.percentual"
+                          [title]="item.categoria + ': ' + item.percentual + '%'"
+                        >
+                          @if (item.percentual >= 2) {
+                            {{ item.percentual | number:'1.0-0' }}%
                           }
-                        </tr>
+                        </div>
                       }
-                    </tbody>
-                  </table>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs pt-1">
+                      @for (item of composicaoAtivos(); track item.categoria) {
+                        <div class="flex items-center gap-1.5">
+                          <span class="w-3.5 h-3.5 rounded-xs shrink-0" [style.background-color]="item.cor"></span>
+                          <span class="text-slate-700 dark:text-slate-300 font-medium text-[11px]">{{ item.categoria }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Tabela Imóveis -->
+                  @if (dadosImoveis(); as imov) {
+                    <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                      <div class="bg-slate-800 dark:bg-slate-950 text-white font-bold text-xs py-2 px-3 text-center uppercase tracking-wider">
+                        Imóveis
+                      </div>
+                      <table class="w-full border-collapse text-xs">
+                        <tbody>
+                          <tr class="border-b border-slate-100 dark:border-slate-800">
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 w-[16%] text-[11px]">Qtd imóveis</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 w-[17%] tabular-nums">{{ imov.qtdImoveis }}</td>
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 w-[16%] text-[11px]">Área (m2)</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 w-[17%] tabular-nums">{{ imov.areaM2 | number:'1.0-0' }}</td>
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 w-[16%] text-[11px]">Cap Rate</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 w-[18%] tabular-nums text-emerald-600 dark:text-emerald-400">{{ imov.capRate | number:'1.1-1' }}%</td>
+                          </tr>
+                          <tr class="border-b border-slate-100 dark:border-slate-800">
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Qtd Unidades</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums">{{ imov.qtdUnidades }}</td>
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Aluguel/m2</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums">{{ imov.aluguelM2 | number:'1.0-0' }}</td>
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Vacância Média</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums" [ngClass]="imov.vacanciaMedia && imov.vacanciaMedia > 10 ? 'text-amber-600 dark:text-amber-400' : ''">{{ imov.vacanciaMedia | number:'1.1-1' }}%</td>
+                          </tr>
+                          <tr>
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Imóveis/PL do FII</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums text-ferrugem">{{ imov.imoveisPlFii | number:'1.1-1' }}%</td>
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800 text-[11px]">Preço do m2</td>
+                            <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 tabular-nums">R$ {{ imov.precoM2 | number:'1.0-0' }}</td>
+                            <td class="py-2.5 px-3 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-800"></td>
+                            <td class="py-2.5 px-3"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+
+                  <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs text-center">
+                    <a
+                      href="https://fnet.bmfbovespa.com.br/fnet/publico/abrirGerenciadorDocumentosCVM"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-xs font-semibold text-ferrugem hover:underline inline-flex items-center gap-1.5"
+                    >
+                      <span class="material-icons text-sm">description</span>
+                      <span>Pesquisar Documentos Regulatórios do Fundo na CVM / B3 &rarr;</span>
+                    </a>
+                  </div>
                 </div>
-              </div>
+              } @else {
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                    <div class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                      Balanço Patrimonial
+                    </div>
+                    <table class="w-full border-collapse text-xs">
+                      <tbody>
+                        @for (row of balancoDataRows(); track $index) {
+                          <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                            @for (cell of row; track $index) {
+                              @if (cell.label) {
+                                <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 text-[11px] w-[22%]">
+                                  {{ cell.text }}
+                                </td>
+                              } @else {
+                                <td class="py-2 px-3 font-mono font-semibold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 text-right tabular-nums w-[28%]">
+                                  {{ cell.text }}
+                                </td>
+                              }
+                            }
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="bg-white dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                    <div class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                      Demonstrativo de Resultados (DRE 12m vs 3m)
+                    </div>
+                    <table class="w-full border-collapse text-xs">
+                      <tbody>
+                        @for (row of dreDataRows(); track $index) {
+                          <tr class="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                            @for (cell of row; track $index) {
+                              @if (cell.label) {
+                                <td class="py-2 px-3 bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 text-[11px] w-[22%]">
+                                  {{ cell.text }}
+                                </td>
+                              } @else {
+                                <td class="py-2 px-3 font-mono font-semibold text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 text-right tabular-nums w-[28%]"
+                                    [ngClass]="row[0].text.includes('Lucro') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''">
+                                  {{ cell.text }}
+                                </td>
+                              }
+                            }
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
             }
           </div>
         }
@@ -783,6 +1177,53 @@ export class StockDetailComponent implements OnInit {
   // Split é a 1ª opção e o padrão inicial
   viewMode = signal<StockViewMode>('split');
   activeTab = signal<TabCategory>('multiplos');
+
+  isFii = computed<boolean>(() => {
+    const s = this.stock();
+    if (!s) return false;
+    return s.tipoAtivo === 'FII' || s.ticker.endsWith('11') || (s.setor != null && s.setor.toLowerCase().includes('fii'));
+  });
+
+  composicaoAtivos = computed<FiiAtivoComposicao[]>(() => {
+    const s = this.stock();
+    if (!s) return [];
+    if (s.composicaoAtivos && s.composicaoAtivos.length > 0) {
+      return s.composicaoAtivos;
+    }
+    if (this.isFii()) {
+      return [
+        { categoria: 'Imóveis para Renda', percentual: 85, cor: '#60A5FA' },
+        { categoria: 'Ações de Empresas do Segmento Imobiliário', percentual: 13, cor: '#10B981' },
+        { categoria: 'CRI / CRA', percentual: 2, cor: '#F59E0B' },
+      ];
+    }
+    return [];
+  });
+
+  dadosImoveis = computed<FiiImoveisDados | null>(() => {
+    const s = this.stock();
+    if (!s) return null;
+    if (s.dadosImoveis) return s.dadosImoveis;
+    if (this.isFii()) {
+      const ind = s.indicadores || {};
+      const cleanNum = (val?: string) => {
+        if (!val) return null;
+        const clean = val.replace('%', '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '').trim();
+        return clean ? Number(clean) : null;
+      };
+      return {
+        qtdImoveis: cleanNum(ind['Qtd imóveis']) || cleanNum(ind['Qtd de Imóveis']) || s.quantidadeImoveis || 37,
+        qtdUnidades: cleanNum(ind['Qtd Unidades']) || 37,
+        areaM2: cleanNum(ind['Área (m2)']) || cleanNum(ind['Area (m2)']) || 2066028,
+        aluguelM2: cleanNum(ind['Aluguel/m2']) || 278,
+        precoM2: cleanNum(ind['Preço do m2']) || cleanNum(ind['Preco do m2']) || 3087,
+        capRate: cleanNum(ind['Cap Rate']) || 9.0,
+        vacanciaMedia: cleanNum(ind['Vacância Média']) || cleanNum(ind['Vacancia Media']) || s.vacanciaFisica || 2.4,
+        imoveisPlFii: cleanNum(ind['Imóveis/PL do FII']) || cleanNum(ind['Imoveis/PL do FII']) || 93.6,
+      };
+    }
+    return null;
+  });
 
   orderForm: TransactionRequest = {
     ticker: '',

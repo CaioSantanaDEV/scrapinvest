@@ -1,4 +1,5 @@
 export type TransactionType = 'COMPRA' | 'VENDA';
+export type AssetType = 'ACAO' | 'FII' | 'RENDA_FIXA';
 
 export interface FundamentusCell {
   text: string;
@@ -16,21 +17,45 @@ export interface FundamentusTable {
   rows: FundamentusRow[];
 }
 
+export interface FiiAtivoComposicao {
+  categoria: string;
+  percentual: number;
+  cor: string;
+}
+
+export interface FiiImoveisDados {
+  qtdImoveis?: number | null;
+  qtdUnidades?: number | null;
+  areaM2?: number | null;
+  aluguelM2?: number | null;
+  precoM2?: number | null;
+  capRate?: number | null;
+  vacanciaMedia?: number | null;
+  imoveisPlFii?: number | null;
+}
+
 export interface StockDetail {
   ticker: string;
   nomeEmpresa: string;
   setor: string;
+  tipoAtivo?: AssetType;
   cotacaoAtual: number;
   variacaoDiaria: number;
-  pl: number;
-  pvp: number;
-  dividendYield: number;
-  roe: number;
-  margemLiquida: number;
+  pl?: number | null;
+  pvp?: number | null;
+  dividendYield?: number | null;
+  roe?: number | null;
+  margemLiquida?: number | null;
+  vacanciaFisica?: number | null;
+  quantidadeImoveis?: number | null;
+  ultimoRendimento?: number | null;
+  segmentoFii?: string | null;
   dataAtualizacao: string;
   fromCache: boolean;
   indicadores?: Record<string, string>;
   tabelasFundamentus?: FundamentusTable[];
+  composicaoAtivos?: FiiAtivoComposicao[];
+  dadosImoveis?: FiiImoveisDados;
 }
 
 export interface TransactionRequest {
@@ -61,6 +86,7 @@ export interface PositionItem {
   ticker: string;
   nomeEmpresa: string;
   setor: string;
+  tipoAtivo?: AssetType;
   quantidadeCustodia: number;
   precoMedio: number;
   cotacaoAtual: number;

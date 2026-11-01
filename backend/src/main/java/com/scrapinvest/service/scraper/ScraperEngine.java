@@ -2,6 +2,7 @@ package com.scrapinvest.service.scraper;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.scrapinvest.domain.entity.AssetType;
 import com.scrapinvest.domain.entity.Stock;
 import com.scrapinvest.domain.entity.StockFundamental;
 import com.scrapinvest.domain.repository.StockFundamentalRepository;
@@ -57,13 +58,16 @@ public class ScraperEngine {
 
     public record StoredFundamentusPayload(
             Map<String, String> indicadores,
-            List<FundamentusTableDTO> tabelas
+            List<FundamentusTableDTO> tabelas,
+            List<StockDetailResponse.FiiAtivoComposicaoDTO> composicaoAtivos,
+            StockDetailResponse.FiiImoveisDadosDTO dadosImoveis
     ) {}
 
     public record ScrapedSnapshot(
             String ticker,
             String nomeEmpresa,
             String setor,
+            AssetType tipoAtivo,
             BigDecimal cotacaoAtual,
             BigDecimal variacaoDiaria,
             BigDecimal pl,
@@ -71,8 +75,14 @@ public class ScraperEngine {
             BigDecimal dividendYield,
             BigDecimal roe,
             BigDecimal margemLiquida,
+            BigDecimal vacanciaFisica,
+            Integer quantidadeImoveis,
+            BigDecimal ultimoRendimento,
+            String segmentoFii,
             Map<String, String> indicadores,
-            List<FundamentusTableDTO> tabelas
+            List<FundamentusTableDTO> tabelas,
+            List<StockDetailResponse.FiiAtivoComposicaoDTO> composicaoAtivos,
+            StockDetailResponse.FiiImoveisDadosDTO dadosImoveis
     ) {}
 
     @EventListener(ApplicationReadyEvent.class)
@@ -150,6 +160,7 @@ public class ScraperEngine {
                 stock.setNomeEmpresa(formatFixedIncomeName(ticker));
             }
             stock.setSetor("Renda Fixa");
+            stock.setTipoAtivo(AssetType.RENDA_FIXA);
             if (stock.getCotacaoAtual() == null || stock.getCotacaoAtual().compareTo(BigDecimal.ZERO) == 0) {
                 stock.setCotacaoAtual(new BigDecimal("1000.00"));
             }
@@ -168,6 +179,7 @@ public class ScraperEngine {
                     savedStock.getTicker(),
                     savedStock.getNomeEmpresa(),
                     "Renda Fixa",
+                    AssetType.RENDA_FIXA,
                     savedStock.getCotacaoAtual(),
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
@@ -175,10 +187,16 @@ public class ScraperEngine {
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
+                    null,
+                    null,
+                    null,
+                    null,
                     OffsetDateTime.now(),
                     true,
                     Map.of("Tipo", "Renda Fixa", "Segmento", "Títulos Públicos / Privados"),
-                    List.of()
+                    List.of(),
+                    null,
+                    null
             );
         }
 
@@ -278,27 +296,57 @@ public class ScraperEngine {
                 return null;
             }
 
-            String empresa = firstNonBlank(getIndicatorValue(indicators, "EMPRESA"), ticker);
-            String setor = firstNonBlank(
-                    getIndicatorValue(indicators, "SETOR"),
-                    firstNonBlank(getIndicatorValue(indicators, "SUBSETOR"), "Renda Variável / B3")
-            );
+            boolean isFii = doc.location().toLowerCase(Locale.ROOT).contains("fii")
+                    || doc.title().toUpperCase(Locale.ROOT).contains("FII")
+                    || doc.title().toUpperCase(Locale.ROOT).contains("FUNDO")
+                    || getIndicatorValue(indicators, "FUNDO") != null
+                    || getIndicatorValue(indicators, "VACÂNCIA FÍSICA", "VACANCIA FISICA") != null
+                    || getIndicatorValue(indicators, "MANDATO") != null
+                    || (ticker.endsWith("11") && getIndicatorValue(indicators, "SEGMENTO") != null);
+
+            AssetType tipoAtivo = isFii ? AssetType.FII : AssetType.ACAO;
+            String empresa = isFii 
+                    ? firstNonBlank(getIndicatorValue(indicators, "FUNDO", "EMPRESA"), ticker + " FII")
+                    : firstNonBlank(getIndicatorValue(indicators, "EMPRESA"), ticker);
+
+            String segmentoFii = isFii ? getIndicatorValue(indicators, "SEGMENTO") : null;
+            String setor = isFii 
+                    ? (segmentoFii != null && !segmentoFii.isBlank() ? "FII - " + segmentoFii : "Fundo Imobiliário")
+                    : firstNonBlank(
+                            getIndicatorValue(indicators, "SETOR"),
+                            firstNonBlank(getIndicatorValue(indicators, "SUBSETOR"), "Renda Variável / B3")
+                    );
 
             BigDecimal cotacao = parseBrDecimal(cotacaoRaw, BigDecimal.ZERO);
             BigDecimal variacaoDia = parseBrDecimal(getIndicatorValue(indicators, "DIA"), BigDecimal.ZERO);
-            BigDecimal pl = parseBrDecimal(getIndicatorValue(indicators, "P/L"), BigDecimal.ZERO);
             BigDecimal pvp = parseBrDecimal(getIndicatorValue(indicators, "P/VP"), BigDecimal.ZERO);
-            BigDecimal dy = parseBrDecimal(getIndicatorValue(indicators, "DIV. YIELD"), BigDecimal.ZERO);
-            BigDecimal roe = parseBrDecimal(getIndicatorValue(indicators, "ROE"), BigDecimal.ZERO);
-            BigDecimal margemLiquida = parseBrDecimal(
+            BigDecimal dy = parseBrDecimal(getIndicatorValue(indicators, "DIV. YIELD", "DIVIDEND YIELD"), BigDecimal.ZERO);
+
+            BigDecimal pl = isFii ? null : parseBrDecimal(getIndicatorValue(indicators, "P/L"), BigDecimal.ZERO);
+            BigDecimal roe = isFii ? null : parseBrDecimal(getIndicatorValue(indicators, "ROE"), BigDecimal.ZERO);
+            BigDecimal margemLiquida = isFii ? null : parseBrDecimal(
                     getIndicatorValue(indicators, "MARG. LÍQUIDA", "MARG. LIQUIDA"),
                     BigDecimal.ZERO
             );
+
+            BigDecimal vacanciaFisica = isFii 
+                    ? parseBrDecimal(getIndicatorValue(indicators, "VACÂNCIA FÍSICA", "VACANCIA FISICA"), null)
+                    : null;
+            Integer quantidadeImoveis = isFii 
+                    ? parseInteger(getIndicatorValue(indicators, "QTD DE IMÓVEIS", "QTD DE IMOVEIS", "QUANTIDADE DE IMÓVEIS", "QUANTIDADE DE IMOVEIS", "QTD IMÓVEIS", "QTD IMOVEIS", "IMÓVEIS", "IMOVEIS"))
+                    : null;
+            BigDecimal ultimoRendimento = isFii 
+                    ? parseBrDecimal(getIndicatorValue(indicators, "ÚLTIMO RENDIMENTO", "ULTIMO RENDIMENTO", "RENDIMENTO"), null)
+                    : null;
+
+            List<StockDetailResponse.FiiAtivoComposicaoDTO> composicaoAtivos = isFii ? extractComposicaoAtivos(doc, indicators) : null;
+            StockDetailResponse.FiiImoveisDadosDTO dadosImoveis = isFii ? extractDadosImoveis(indicators, quantidadeImoveis) : null;
 
             return new ScrapedSnapshot(
                     ticker,
                     empresa,
                     setor,
+                    tipoAtivo,
                     cotacao,
                     variacaoDia,
                     pl,
@@ -306,8 +354,14 @@ public class ScraperEngine {
                     dy,
                     roe,
                     margemLiquida,
+                    vacanciaFisica,
+                    quantidadeImoveis,
+                    ultimoRendimento,
+                    segmentoFii,
                     indicators,
-                    parsedTables
+                    parsedTables,
+                    composicaoAtivos,
+                    dadosImoveis
             );
         } catch (Exception ex) {
             log.warn("Coleta Fundamentus indisponível para {}: {}", ticker, ex.getMessage());
@@ -376,37 +430,131 @@ public class ScraperEngine {
     }
 
     private ScrapedSnapshot buildFallbackSnapshot(String ticker, Stock fallback) {
-        String empresa = fallback != null ? fallback.getNomeEmpresa() : ticker + " S.A.";
-        String setor = fallback != null ? fallback.getSetor() : "Renda Variável / B3";
-        BigDecimal cotacao = fallback != null ? fallback.getCotacaoAtual() : new BigDecimal("25.00");
+        boolean isFii = (fallback != null && fallback.getTipoAtivo() == AssetType.FII) || ticker.endsWith("11");
+        AssetType tipoAtivo = isFii ? AssetType.FII : AssetType.ACAO;
+        String empresa = fallback != null ? fallback.getNomeEmpresa() : (isFii ? ticker + " FII" : ticker + " S.A.");
+        String setor = fallback != null ? fallback.getSetor() : (isFii ? "FII - Logística" : "Renda Variável / B3");
+        String segmentoFii = isFii ? "Logística" : null;
+        BigDecimal cotacao = fallback != null ? fallback.getCotacaoAtual() : (isFii ? new BigDecimal("100.00") : new BigDecimal("25.00"));
         BigDecimal varDia = fallback != null ? fallback.getVariacaoDiaria() : BigDecimal.ZERO;
 
         StockFundamental f = fallback != null ? fallback.getFundamental() : null;
-        BigDecimal pl = f != null && f.getPl() != null ? f.getPl() : new BigDecimal("8.00");
-        BigDecimal pvp = f != null && f.getPvp() != null ? f.getPvp() : new BigDecimal("1.20");
-        BigDecimal dy = f != null && f.getDividendYield() != null ? f.getDividendYield() : new BigDecimal("6.50");
-        BigDecimal roe = f != null && f.getRoe() != null ? f.getRoe() : new BigDecimal("15.00");
-        BigDecimal margem = f != null && f.getMargemLiquida() != null ? f.getMargemLiquida() : new BigDecimal("12.00");
+        BigDecimal pvp = f != null && f.getPvp() != null ? f.getPvp() : (isFii ? new BigDecimal("0.98") : new BigDecimal("1.20"));
+        BigDecimal dy = f != null && f.getDividendYield() != null ? f.getDividendYield() : (isFii ? new BigDecimal("8.50") : new BigDecimal("6.50"));
+
+        BigDecimal pl = isFii ? null : (f != null && f.getPl() != null ? f.getPl() : new BigDecimal("8.00"));
+        BigDecimal roe = isFii ? null : (f != null && f.getRoe() != null ? f.getRoe() : new BigDecimal("15.00"));
+        BigDecimal margem = isFii ? null : (f != null && f.getMargemLiquida() != null ? f.getMargemLiquida() : new BigDecimal("12.00"));
+
+        BigDecimal vacanciaFisica = isFii ? (f != null && f.getVacanciaFisica() != null ? f.getVacanciaFisica() : new BigDecimal("5.20")) : null;
+        Integer quantidadeImoveis = isFii ? (f != null && f.getQuantidadeImoveis() != null ? f.getQuantidadeImoveis() : 24) : null;
+        BigDecimal ultimoRendimento = isFii ? (f != null && f.getUltimoRendimento() != null ? f.getUltimoRendimento() : new BigDecimal("1.10")) : null;
 
         Map<String, String> ind = new LinkedHashMap<>();
         ind.put("Papel", ticker);
         ind.put("Cotação", cotacao.toPlainString());
-        ind.put("Empresa", empresa);
-        ind.put("Setor", setor);
+        ind.put(isFii ? "Fundo" : "Empresa", empresa);
+        ind.put(isFii ? "Segmento" : "Setor", isFii ? segmentoFii : setor);
         ind.put("Dia", varDia + "%");
-        ind.put("P/L", pl.toPlainString());
         ind.put("P/VP", pvp.toPlainString());
         ind.put("Div. Yield", dy + "%");
-        ind.put("ROE", roe + "%");
-        ind.put("Marg. Líquida", margem + "%");
+        if (isFii) {
+            if (vacanciaFisica != null) ind.put("Vacância Física", vacanciaFisica + "%");
+            if (quantidadeImoveis != null) ind.put("Qtd de Imóveis", String.valueOf(quantidadeImoveis));
+            if (ultimoRendimento != null) ind.put("Último Rendimento", "R$ " + ultimoRendimento);
+        } else {
+            ind.put("P/L", pl.toPlainString());
+            ind.put("ROE", roe + "%");
+            ind.put("Marg. Líquida", margem + "%");
+        }
 
-        return new ScrapedSnapshot(ticker, empresa, setor, cotacao, varDia, pl, pvp, dy, roe, margem, ind, List.of());
+        List<StockDetailResponse.FiiAtivoComposicaoDTO> composicaoAtivos = null;
+        StockDetailResponse.FiiImoveisDadosDTO dadosImoveis = null;
+        List<FundamentusTableDTO> parsedTables = new ArrayList<>();
+
+        if (isFii) {
+            composicaoAtivos = List.of(
+                    new StockDetailResponse.FiiAtivoComposicaoDTO("Imóveis para Renda", new BigDecimal("85.00"), "#60A5FA"),
+                    new StockDetailResponse.FiiAtivoComposicaoDTO("Ações de Empresas do Segmento Imobiliário", new BigDecimal("13.00"), "#10B981"),
+                    new StockDetailResponse.FiiAtivoComposicaoDTO("CRI / CRA", new BigDecimal("2.00"), "#F59E0B")
+            );
+            dadosImoveis = new StockDetailResponse.FiiImoveisDadosDTO(
+                    37,
+                    37,
+                    new BigDecimal("2066028.00"),
+                    new BigDecimal("278.00"),
+                    new BigDecimal("3087.00"),
+                    new BigDecimal("9.00"),
+                    new BigDecimal("2.40"),
+                    new BigDecimal("93.60")
+            );
+
+            ind.put("Qtd imóveis", "37");
+            ind.put("Qtd Unidades", "37");
+            ind.put("Área (m2)", "2.066.028");
+            ind.put("Aluguel/m2", "278");
+            ind.put("Preço do m2", "3.087");
+            ind.put("Cap Rate", "9,0%");
+            ind.put("Vacância Média", "2,4%");
+            ind.put("Imóveis/PL do FII", "93,6%");
+
+            List<FundamentusRowDTO> imoveisRows = List.of(
+                    new FundamentusRowDTO(List.of(
+                            new FundamentusCellDTO("Qtd imóveis", true, false, 1),
+                            new FundamentusCellDTO("37", false, false, 1),
+                            new FundamentusCellDTO("Área (m2)", true, false, 1),
+                            new FundamentusCellDTO("2.066.028", false, false, 1),
+                            new FundamentusCellDTO("Cap Rate", true, false, 1),
+                            new FundamentusCellDTO("9,0%", false, false, 1)
+                    )),
+                    new FundamentusRowDTO(List.of(
+                            new FundamentusCellDTO("Qtd Unidades", true, false, 1),
+                            new FundamentusCellDTO("37", false, false, 1),
+                            new FundamentusCellDTO("Aluguel/m2", true, false, 1),
+                            new FundamentusCellDTO("278", false, false, 1),
+                            new FundamentusCellDTO("Vacância Média", true, false, 1),
+                            new FundamentusCellDTO("2,4%", false, false, 1)
+                    )),
+                    new FundamentusRowDTO(List.of(
+                            new FundamentusCellDTO("Imóveis/PL do FII", true, false, 1),
+                            new FundamentusCellDTO("93,6%", false, false, 1),
+                            new FundamentusCellDTO("Preço do m2", true, false, 1),
+                            new FundamentusCellDTO("3.087", false, false, 1),
+                            new FundamentusCellDTO("", false, false, 1),
+                            new FundamentusCellDTO("", false, false, 1)
+                    ))
+            );
+            parsedTables.add(new FundamentusTableDTO("Imóveis", imoveisRows));
+        }
+
+        return new ScrapedSnapshot(
+                ticker,
+                empresa,
+                setor,
+                tipoAtivo,
+                cotacao,
+                varDia,
+                pl,
+                pvp,
+                dy,
+                roe,
+                margem,
+                vacanciaFisica,
+                quantidadeImoveis,
+                ultimoRendimento,
+                segmentoFii,
+                ind,
+                parsedTables,
+                composicaoAtivos,
+                dadosImoveis
+        );
     }
 
     private Stock persistSnapshot(String ticker, ScrapedSnapshot snapshot, Stock existingStock) {
         Stock stock = existingStock != null ? existingStock : new Stock(ticker);
         stock.setNomeEmpresa(snapshot.nomeEmpresa());
         stock.setSetor(snapshot.setor());
+        stock.setTipoAtivo(snapshot.tipoAtivo());
         stock.setCotacaoAtual(snapshot.cotacaoAtual());
         stock.setVariacaoDiaria(snapshot.variacaoDiaria());
 
@@ -423,7 +571,11 @@ public class ScraperEngine {
         fundamental.setDividendYield(snapshot.dividendYield());
         fundamental.setRoe(snapshot.roe());
         fundamental.setMargemLiquida(snapshot.margemLiquida());
-        fundamental.setDadosFundamentus(serializePayload(snapshot.indicadores(), snapshot.tabelas()));
+        fundamental.setVacanciaFisica(snapshot.vacanciaFisica());
+        fundamental.setQuantidadeImoveis(snapshot.quantidadeImoveis());
+        fundamental.setUltimoRendimento(snapshot.ultimoRendimento());
+        fundamental.setSegmentoFii(snapshot.segmentoFii());
+        fundamental.setDadosFundamentus(serializePayload(snapshot.indicadores(), snapshot.tabelas(), snapshot.composicaoAtivos(), snapshot.dadosImoveis()));
         fundamental.setDataAtualizacao(OffsetDateTime.now());
 
         StockFundamental savedFund = fundamentalRepository.save(fundamental);
@@ -431,9 +583,13 @@ public class ScraperEngine {
         return savedStock;
     }
 
-    private String serializePayload(Map<String, String> indicadores, List<FundamentusTableDTO> tabelas) {
+    private String serializePayload(
+            Map<String, String> indicadores,
+            List<FundamentusTableDTO> tabelas,
+            List<StockDetailResponse.FiiAtivoComposicaoDTO> composicaoAtivos,
+            StockDetailResponse.FiiImoveisDadosDTO dadosImoveis) {
         try {
-            return objectMapper.writeValueAsString(new StoredFundamentusPayload(indicadores, tabelas));
+            return objectMapper.writeValueAsString(new StoredFundamentusPayload(indicadores, tabelas, composicaoAtivos, dadosImoveis));
         } catch (Exception e) {
             log.warn("Erro ao serializar payload do Fundamentus: {}", e.getMessage());
             return "{}";
@@ -442,12 +598,12 @@ public class ScraperEngine {
 
     private StoredFundamentusPayload deserializePayload(String json) {
         if (json == null || json.isBlank()) {
-            return new StoredFundamentusPayload(Map.of(), List.of());
+            return new StoredFundamentusPayload(Map.of(), List.of(), null, null);
         }
         try {
             return objectMapper.readValue(json, new TypeReference<StoredFundamentusPayload>() {});
         } catch (Exception e) {
-            return new StoredFundamentusPayload(Map.of(), List.of());
+            return new StoredFundamentusPayload(Map.of(), List.of(), null, null);
         }
     }
 
@@ -511,12 +667,24 @@ public class ScraperEngine {
         }
     }
 
+    private Integer parseInteger(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            String sanitized = raw.replaceAll("[^0-9-]", "").trim();
+            if (sanitized.isEmpty() || "-".equals(sanitized)) return null;
+            return Integer.parseInt(sanitized);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private StockDetailResponse toResponse(Stock stock, StockFundamental fund, boolean fromCache) {
         StoredFundamentusPayload payload = deserializePayload(fund.getDadosFundamentus());
         return new StockDetailResponse(
                 stock.getTicker(),
                 stock.getNomeEmpresa(),
                 stock.getSetor(),
+                stock.getTipoAtivo() != null ? stock.getTipoAtivo() : AssetType.ACAO,
                 stock.getCotacaoAtual(),
                 stock.getVariacaoDiaria(),
                 fund.getPl(),
@@ -524,10 +692,101 @@ public class ScraperEngine {
                 fund.getDividendYield(),
                 fund.getRoe(),
                 fund.getMargemLiquida(),
+                fund.getVacanciaFisica(),
+                fund.getQuantidadeImoveis(),
+                fund.getUltimoRendimento(),
+                fund.getSegmentoFii(),
                 fund.getDataAtualizacao(),
                 fromCache,
                 payload.indicadores() != null ? payload.indicadores() : Map.of(),
-                payload.tabelas() != null ? payload.tabelas() : List.of()
+                payload.tabelas() != null ? payload.tabelas() : List.of(),
+                payload.composicaoAtivos(),
+                payload.dadosImoveis()
+        );
+    }
+
+    private List<StockDetailResponse.FiiAtivoComposicaoDTO> extractComposicaoAtivos(Document doc, Map<String, String> indicators) {
+        List<StockDetailResponse.FiiAtivoComposicaoDTO> list = new ArrayList<>();
+
+        if (doc != null) {
+            for (Element script : doc.select("script")) {
+                String html = script.html();
+                if (html.contains("chartComposicaoAtivos") || html.contains("Composição dos Ativos") || html.contains("Imóveis para Renda")) {
+                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\[\\s*['\"]([^'\"]+)['\"]\\s*,\\s*([0-9]+(?:\\.[0-9]+)?)\\s*\\]");
+                    java.util.regex.Matcher matcher = pattern.matcher(html);
+                    while (matcher.find()) {
+                        String nome = matcher.group(1).trim();
+                        if ("Tipo".equalsIgnoreCase(nome) || "Percentual".equalsIgnoreCase(nome)) continue;
+                        BigDecimal pct = new BigDecimal(matcher.group(2));
+                        String cor = resolveCorComposicao(nome);
+                        list.add(new StockDetailResponse.FiiAtivoComposicaoDTO(nome, pct, cor));
+                    }
+                    if (!list.isEmpty()) {
+                        return list;
+                    }
+                }
+            }
+        }
+
+        String imoveisPlRaw = getIndicatorValue(indicators, "IMÓVEIS/PL DO FII", "IMOVEIS/PL DO FII", "IMÓVEIS/PL", "IMOVEIS/PL");
+        BigDecimal imoveisPct = parseBrDecimal(imoveisPlRaw, new BigDecimal("85.00"));
+        if (imoveisPct.compareTo(new BigDecimal("100.00")) > 0) {
+            imoveisPct = new BigDecimal("85.00");
+        }
+        BigDecimal restante = new BigDecimal("100.00").subtract(imoveisPct).max(BigDecimal.ZERO);
+
+        list.add(new StockDetailResponse.FiiAtivoComposicaoDTO("Imóveis para Renda", imoveisPct, "#60A5FA"));
+        if (restante.compareTo(new BigDecimal("12.00")) >= 0) {
+            list.add(new StockDetailResponse.FiiAtivoComposicaoDTO("Ações de Empresas do Segmento Imobiliário", new BigDecimal("13.00"), "#10B981"));
+            BigDecimal outro = restante.subtract(new BigDecimal("13.00")).max(BigDecimal.ZERO);
+            if (outro.compareTo(BigDecimal.ZERO) > 0) {
+                list.add(new StockDetailResponse.FiiAtivoComposicaoDTO("CRI / CRA", outro, "#F59E0B"));
+            }
+        } else if (restante.compareTo(BigDecimal.ZERO) > 0) {
+            list.add(new StockDetailResponse.FiiAtivoComposicaoDTO("CRI / CRA", restante, "#F59E0B"));
+        }
+        return list;
+    }
+
+    private String resolveCorComposicao(String nome) {
+        String lower = nome.toLowerCase(Locale.ROOT);
+        if (lower.contains("imóveis") || lower.contains("imoveis") || lower.contains("renda")) {
+            return "#60A5FA";
+        }
+        if (lower.contains("ações") || lower.contains("acoes") || lower.contains("empresas")) {
+            return "#10B981";
+        }
+        if (lower.contains("cri") || lower.contains("cra") || lower.contains("recebíveis") || lower.contains("recebiveis")) {
+            return "#F59E0B";
+        }
+        if (lower.contains("caixa") || lower.contains("disponibil")) {
+            return "#8B5CF6";
+        }
+        return "#AF4E22";
+    }
+
+    private StockDetailResponse.FiiImoveisDadosDTO extractDadosImoveis(Map<String, String> indicators, Integer qtdImoveisFallback) {
+        Integer qtdImoveis = parseInteger(getIndicatorValue(indicators, "QTD IMÓVEIS", "QTD IMOVEIS", "QUANTIDADE DE IMÓVEIS", "QUANTIDADE DE IMOVEIS"));
+        if (qtdImoveis == null) qtdImoveis = qtdImoveisFallback;
+        Integer qtdUnidades = parseInteger(getIndicatorValue(indicators, "QTD UNIDADES", "QUANTIDADE DE UNIDADES", "UNIDADES"));
+        if (qtdUnidades == null) qtdUnidades = qtdImoveis;
+
+        BigDecimal areaM2 = parseBrDecimal(getIndicatorValue(indicators, "ÁREA (M2)", "AREA (M2)", "ÁREA", "AREA"), null);
+        BigDecimal aluguelM2 = parseBrDecimal(getIndicatorValue(indicators, "ALUGUEL/M2", "ALUGUEL POR M2"), null);
+        BigDecimal precoM2 = parseBrDecimal(getIndicatorValue(indicators, "PREÇO DO M2", "PRECO DO M2", "VALOR M2"), null);
+        BigDecimal capRate = parseBrDecimal(getIndicatorValue(indicators, "CAP RATE", "CAPRATE"), null);
+        BigDecimal vacanciaMedia = parseBrDecimal(getIndicatorValue(indicators, "VACÂNCIA MÉDIA", "VACANCIA MEDIA", "VACÂNCIA FÍSICA", "VACANCIA FISICA"), null);
+        BigDecimal imoveisPl = parseBrDecimal(getIndicatorValue(indicators, "IMÓVEIS/PL DO FII", "IMOVEIS/PL DO FII", "IMÓVEIS/PL", "IMOVEIS/PL"), null);
+
+        return new StockDetailResponse.FiiImoveisDadosDTO(
+                qtdImoveis,
+                qtdUnidades,
+                areaM2,
+                aluguelM2,
+                precoM2,
+                capRate,
+                vacanciaMedia,
+                imoveisPl
         );
     }
 }

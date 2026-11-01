@@ -32,6 +32,18 @@ public class StockFundamental {
     @Column(name = "margem_liquida", precision = 12, scale = 4)
     private BigDecimal margemLiquida;
 
+    @Column(name = "vacancia_fisica", precision = 8, scale = 4)
+    private BigDecimal vacanciaFisica;
+
+    @Column(name = "quantidade_imoveis")
+    private Integer quantidadeImoveis;
+
+    @Column(name = "ultimo_rendimento", precision = 15, scale = 4)
+    private BigDecimal ultimoRendimento;
+
+    @Column(name = "segmento_fii", length = 100)
+    private String segmentoFii;
+
     @Column(name = "dados_fundamentus", columnDefinition = "TEXT")
     private String dadosFundamentus;
 
@@ -99,6 +111,38 @@ public class StockFundamental {
 
     public void setMargemLiquida(BigDecimal margemLiquida) {
         this.margemLiquida = margemLiquida;
+    }
+
+    public BigDecimal getVacanciaFisica() {
+        return vacanciaFisica;
+    }
+
+    public void setVacanciaFisica(BigDecimal vacanciaFisica) {
+        this.vacanciaFisica = vacanciaFisica;
+    }
+
+    public Integer getQuantidadeImoveis() {
+        return quantidadeImoveis;
+    }
+
+    public void setQuantidadeImoveis(Integer quantidadeImoveis) {
+        this.quantidadeImoveis = quantidadeImoveis;
+    }
+
+    public BigDecimal getUltimoRendimento() {
+        return ultimoRendimento;
+    }
+
+    public void setUltimoRendimento(BigDecimal ultimoRendimento) {
+        this.ultimoRendimento = ultimoRendimento;
+    }
+
+    public String getSegmentoFii() {
+        return segmentoFii;
+    }
+
+    public void setSegmentoFii(String segmentoFii) {
+        this.segmentoFii = segmentoFii;
     }
 
     public String getDadosFundamentus() {

@@ -251,22 +251,22 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                         {{ s.variacaoDiaria >= 0 ? '+' : '' }}{{ s.variacaoDiaria | number:'1.2-2' }}%
                       </td>
                       <td class="py-2.5 px-3.5 text-right text-slate-700 dark:text-slate-300 font-mono border-r border-slate-200 dark:border-slate-700">
-                        {{ s.pl | number:'1.2-2' }}
+                        {{ s.pl != null ? (s.pl | number:'1.2-2') : '-' }}
                       </td>
                       <td class="py-2.5 px-3.5 text-right font-mono border-r border-slate-200 dark:border-slate-700"
-                          [ngClass]="s.pvp < 1.0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-700 dark:text-slate-300'">
-                        {{ s.pvp | number:'1.2-2' }}
+                          [ngClass]="s.pvp != null && s.pvp < 1.0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-700 dark:text-slate-300'">
+                        {{ s.pvp != null ? (s.pvp | number:'1.2-2') : '-' }}
                       </td>
                       <td class="py-2.5 px-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
-                        {{ s.dividendYield | number:'1.2-2' }}%
+                        {{ s.dividendYield != null ? (s.dividendYield | number:'1.2-2') + '%' : '-' }}
                       </td>
                       <td class="py-2.5 px-3.5 text-right font-semibold border-r border-slate-200 dark:border-slate-700"
-                          [ngClass]="s.roe < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'">
-                        {{ s.roe | number:'1.2-2' }}%
+                          [ngClass]="s.roe != null && s.roe < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'">
+                        {{ s.roe != null ? (s.roe | number:'1.2-2') + '%' : '-' }}
                       </td>
                       <td class="py-2.5 px-3.5 text-right border-r border-slate-200 dark:border-slate-700"
-                          [ngClass]="s.margemLiquida < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'">
-                        {{ s.margemLiquida | number:'1.2-2' }}%
+                          [ngClass]="s.margemLiquida != null && s.margemLiquida < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'">
+                        {{ s.margemLiquida != null ? (s.margemLiquida | number:'1.2-2') + '%' : '-' }}
                       </td>
                       <td class="py-2.5 px-3.5 text-right text-slate-700 dark:text-slate-300 font-mono border-r border-slate-200 dark:border-slate-700">
                         {{ s.indicadores?.['EV / EBITDA'] || '-' }}
@@ -405,28 +405,53 @@ type SortColumn = 'TICKER' | 'COTACAO' | 'VAR_DIA' | 'PL' | 'PVP' | 'DY' | 'ROE'
                   </div>
                 </div>
 
-                <div class="grid grid-cols-5 gap-1.5 pt-3 border-t border-slate-200 dark:border-slate-800 text-center tabular-nums">
-                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/L</p>
-                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.pl | number:'1.2-2' }}</p>
+                @if (stock.tipoAtivo === 'FII' || stock.ticker.endsWith('11') || (stock.setor && stock.setor.includes('FII'))) {
+                  <div class="grid grid-cols-5 gap-1.5 pt-3 border-t border-slate-200 dark:border-slate-800 text-center tabular-nums">
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/VP</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.pvp != null ? (stock.pvp | number:'1.2-2') : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">DY</p>
+                      <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ stock.dividendYield != null ? (stock.dividendYield | number:'1.1-1') + '%' : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Rendim.</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.ultimoRendimento != null ? (stock.ultimoRendimento | currency:'BRL') : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Vacância</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.vacanciaFisica != null ? (stock.vacanciaFisica | number:'1.1-1') + '%' : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Imóveis</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.quantidadeImoveis != null ? stock.quantidadeImoveis : '-' }}</p>
+                    </div>
                   </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/VP</p>
-                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.pvp | number:'1.2-2' }}</p>
+                } @else {
+                  <div class="grid grid-cols-5 gap-1.5 pt-3 border-t border-slate-200 dark:border-slate-800 text-center tabular-nums">
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/L</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.pl != null ? (stock.pl | number:'1.2-2') : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">P/VP</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.pvp != null ? (stock.pvp | number:'1.2-2') : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">DY</p>
+                      <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ stock.dividendYield != null ? (stock.dividendYield | number:'1.1-1') + '%' : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">ROE</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.roe != null ? (stock.roe | number:'1.1-1') + '%' : '-' }}</p>
+                    </div>
+                    <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
+                      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">M. Líq</p>
+                      <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.margemLiquida != null ? (stock.margemLiquida | number:'1.1-1') + '%' : '-' }}</p>
+                    </div>
                   </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">DY</p>
-                    <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{{ stock.dividendYield | number:'1.1-1' }}%</p>
-                  </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">ROE</p>
-                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.roe | number:'1.1-1' }}%</p>
-                  </div>
-                  <div class="p-2 rounded-lg border bg-slate-50 dark:bg-slate-800/80 border-slate-200/70 dark:border-slate-700">
-                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">M. Líq</p>
-                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{{ stock.margemLiquida | number:'1.1-1' }}%</p>
-                  </div>
-                </div>
+                }
               </div>
 
               <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">

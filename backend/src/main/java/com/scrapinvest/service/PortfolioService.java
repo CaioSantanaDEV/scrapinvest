@@ -1,5 +1,6 @@
 package com.scrapinvest.service;
 
+import com.scrapinvest.domain.entity.AssetType;
 import com.scrapinvest.domain.entity.Stock;
 import com.scrapinvest.domain.entity.Transaction;
 import com.scrapinvest.domain.entity.TransactionType;
@@ -205,10 +206,15 @@ public class PortfolioService {
                     ? updatedAmount.divide(BigDecimal.valueOf(acc.custodyQuantity), 4, RoundingMode.HALF_UP)
                     : acc.averagePrice;
 
+            AssetType tipoAtivo = stockInfo.tipoAtivo() != null 
+                    ? stockInfo.tipoAtivo() 
+                    : AssetType.RENDA_FIXA;
+
             return new PositionItem(
                     ticker,
                     stockInfo.nomeEmpresa(),
                     "Renda Fixa",
+                    tipoAtivo,
                     acc.custodyQuantity,
                     scaleCurrency(acc.averagePrice),
                     scaleCurrency(currentPrice),
@@ -225,6 +231,10 @@ public class PortfolioService {
                     acc.totalPurchases
             );
         } else {
+            AssetType tipoAtivo = stockInfo.tipoAtivo() != null 
+                    ? stockInfo.tipoAtivo() 
+                    : (ticker.endsWith("11") ? AssetType.FII : AssetType.ACAO);
+
             BigDecimal currentPrice = stockInfo.cotacaoAtual() != null ? stockInfo.cotacaoAtual() : acc.averagePrice;
             BigDecimal investedAmount = scaleCurrency(acc.averagePrice.multiply(BigDecimal.valueOf(acc.custodyQuantity)));
             BigDecimal updatedAmount = scaleCurrency(currentPrice.multiply(BigDecimal.valueOf(acc.custodyQuantity)));
@@ -236,6 +246,7 @@ public class PortfolioService {
                     ticker,
                     stockInfo.nomeEmpresa(),
                     stockInfo.setor(),
+                    tipoAtivo,
                     acc.custodyQuantity,
                     scaleCurrency(acc.averagePrice),
                     scaleCurrency(currentPrice),
@@ -260,6 +271,7 @@ public class PortfolioService {
                         item.ticker(),
                         item.nomeEmpresa(),
                         item.setor(),
+                        item.tipoAtivo(),
                         item.quantidadeCustodia(),
                         item.precoMedio(),
                         item.cotacaoAtual(),

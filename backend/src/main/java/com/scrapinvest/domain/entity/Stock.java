@@ -19,6 +19,10 @@ public class Stock {
     @Column(name = "setor", length = 100, nullable = false)
     private String setor;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_ativo", length = 20, nullable = false)
+    private AssetType tipoAtivo = AssetType.ACAO;
+
     @Column(name = "cotacao_atual", precision = 15, scale = 4, nullable = false)
     private BigDecimal cotacaoAtual = BigDecimal.ZERO;
 
@@ -84,6 +88,14 @@ public class Stock {
 
     public void setCriadoEm(OffsetDateTime criadoEm) {
         this.criadoEm = criadoEm;
+    }
+
+    public AssetType getTipoAtivo() {
+        return tipoAtivo;
+    }
+
+    public void setTipoAtivo(AssetType tipoAtivo) {
+        this.tipoAtivo = tipoAtivo;
     }
 
     public StockFundamental getFundamental() {
