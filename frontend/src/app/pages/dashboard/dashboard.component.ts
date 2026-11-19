@@ -518,7 +518,7 @@ export class DashboardComponent implements OnInit {
 
   loadDashboardData(): void {
     this.api.getMarketHighlights().subscribe({
-      next: (data) => this.highlights.set(data),
+      next: (data) => this.highlights.set(this.filterVariableIncome(data)),
     });
     this.api.getConsolidatedPortfolio().subscribe({
       next: (summary) => this.portfolio.set(summary),
@@ -558,12 +558,18 @@ export class DashboardComponent implements OnInit {
     this.refreshingAll.set(true);
     this.api.refreshAllStocks().subscribe({
       next: (updated) => {
-        this.highlights.set(updated);
+        this.highlights.set(this.filterVariableIncome(updated));
         this.refreshingAll.set(false);
         this.api.getConsolidatedPortfolio().subscribe((p) => this.portfolio.set(p));
       },
       error: () => this.refreshingAll.set(false),
     });
+  }
+
+  private filterVariableIncome(stocks: StockDetail[]): StockDetail[] {
+    return stocks.filter(
+      (s) => s.tipoAtivo !== 'RENDA_FIXA' && s.setor?.toLowerCase() !== 'renda fixa'
+    );
   }
 
   setSort(field: SortColumn, defaultAsc: boolean): void {

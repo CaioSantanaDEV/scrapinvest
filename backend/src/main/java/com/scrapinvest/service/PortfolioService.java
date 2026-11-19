@@ -136,6 +136,9 @@ public class PortfolioService {
     @Transactional
     public List<StockDetailResponse> listMarketHighlights() {
         List<String> tickers = stockRepository.findAll().stream()
+                .filter(stock -> stock.getTipoAtivo() != AssetType.RENDA_FIXA
+                        && !scraperEngine.isFixedIncome(stock.getTicker())
+                        && !"Renda Fixa".equalsIgnoreCase(stock.getSetor()))
                 .map(Stock::getTicker)
                 .toList();
         List<StockDetailResponse> responses = new ArrayList<>();

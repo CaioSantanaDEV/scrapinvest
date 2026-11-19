@@ -20,8 +20,8 @@ import { RegisterRequest } from '../../core/models/scrapinvest.models';
                 <path
                   fill="#AF4E22"
                   fill-rule="evenodd"
-                  d="M 33 16 L 67 16 L 85 50 L 67 84 L 33 84 L 15 50 Z
-                     M 50 33 A 17 17 0 1 0 50 67 A 17 17 0 1 0 50 33 Z"
+                  d="M 28 11.89 L 72 11.89 L 94 50 L 72 88.11 L 28 88.11 L 6 50 Z
+                     M 50 31.5 A 18.5 18.5 0 1 0 50 68.5 A 18.5 18.5 0 1 0 50 31.5 Z"
                 />
               </svg>
             </div>
