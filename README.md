@@ -86,6 +86,11 @@ flowchart TD
     Flyway --> DB
 ```
 
+### Decisões Técnicas
+- **Governança de Schema com Flyway (`ddl-auto=validate`):** Alterações de estrutura são versionadas exclusivamente em scripts SQL determinísticos (`V1__create_initial_schema.sql`), com dados de demonstração isolados em seed repetível de desenvolvimento (`db/dev-seed/R__seed_demo_data.sql`) e validação estrita pelo Hibernate na inicialização.
+- **Resiliência no Web Scraping (Cache & Fallback):** O `ScraperEngine` armazena snapshots no PostgreSQL com TTL configurável. Em caso de indisponibilidade ou timeout da fonte externa, o serviço opera em modo de contingência retornando o último estado válido persistido, sem interromper a experiência do usuário.
+- **Segurança Stateless e Precisão Monetária:** Autenticação baseada em tokens JWT assinados via HMAC-SHA256 com resolução de identidade pelo `SecurityContext`, tratamento centralizado de erros via `@RestControllerAdvice` e cálculos financeiros processados estritamente com `BigDecimal`.
+
 ---
 
 ## Identidade Visual & Branding

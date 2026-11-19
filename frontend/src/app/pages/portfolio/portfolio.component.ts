@@ -815,10 +815,9 @@ export class PortfolioComponent implements OnInit {
         this.positionToDelete.set(null);
         this.loadPortfolio();
       },
-      error: (err) => {
+      error: () => {
         this.isDeleting.set(false);
-        console.error('Erro ao excluir posição:', err);
-        alert('Não foi possível excluir a posição. Tente novamente.');
+        window.alert('Não foi possível excluir a posição. Tente novamente.');
       }
     });
   }

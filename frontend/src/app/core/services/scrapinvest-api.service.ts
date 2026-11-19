@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
+import { resolveApiBaseUrl } from '../config/api.config';
 import {
   PortfolioSummary,
   StockDetail,
@@ -13,13 +14,12 @@ import {
 })
 export class ScrapInvestApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = typeof window !== 'undefined' && window.location.port === '4200'
-    ? 'http://localhost:8080/api'
-    : '/api';
+  private readonly baseUrl = resolveApiBaseUrl();
 
   readonly comparisonTickers = signal<string[]>([]);
   readonly comparedStocks = signal<StockDetail[]>([]);
   readonly isLoadingComparison = signal<boolean>(false);
+  readonly comparisonError = signal<string | null>(null);
 
   getMarketHighlights(): Observable<StockDetail[]> {
     return this.http.get<StockDetail[]>(`${this.baseUrl}/stocks`);
@@ -70,12 +70,14 @@ export class ScrapInvestApiService {
     }
 
     this.isLoadingComparison.set(true);
+    this.comparisonError.set(null);
     this.compareStocks(tickers).subscribe({
-      next: (data) => {
-        this.comparedStocks.set(data);
+      next: (stocks) => {
+        this.comparedStocks.set(stocks);
         this.isLoadingComparison.set(false);
       },
       error: () => {
+        this.comparisonError.set('Não foi possível carregar os dados comparativos dos ativos solicitados.');
         this.isLoadingComparison.set(false);
       }
     });

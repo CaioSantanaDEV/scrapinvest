@@ -1391,9 +1391,8 @@ export class StockDetailComponent implements OnInit {
           .getTransactionsByTicker(s.ticker)
           .subscribe((txs) => this.transactions.set(txs));
       },
-      error: (err) => {
-        console.error('Erro ao excluir transação:', err);
-        alert('Não foi possível excluir a operação.');
+      error: () => {
+        window.alert('Não foi possível excluir a operação. Tente novamente.');
       }
     });
   }

@@ -1230,7 +1230,7 @@ export class FixedIncomeCalculatorComponent implements OnInit {
     });
   }
 
-  private barLeaveTimeout: any = null;
+  private barLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   onChartBarEnter(bar: TimelinePoint): void {
     if (this.barLeaveTimeout) {

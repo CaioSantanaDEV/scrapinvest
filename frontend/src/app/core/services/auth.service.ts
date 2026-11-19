@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { resolveApiBaseUrl } from '../config/api.config';
 import {
   AuthResponse,
   LoginRequest,
@@ -19,9 +20,7 @@ export class AuthService {
   private readonly TOKEN_KEY = 'scrapinvest_token';
   private readonly USER_KEY = 'scrapinvest_user';
 
-  private readonly baseUrl = typeof window !== 'undefined' && window.location.port === '4200'
-    ? 'http://localhost:8080/api/auth'
-    : '/api/auth';
+  private readonly baseUrl = resolveApiBaseUrl('auth');
 
   readonly currentUser = signal<User | null>(this.getInitialUser());
   readonly token = signal<string | null>(this.getInitialToken());

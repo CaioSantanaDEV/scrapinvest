@@ -1,5 +1,6 @@
 package com.scrapinvest.service.scraper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scrapinvest.domain.entity.AssetType;
@@ -39,13 +40,13 @@ public class ScraperEngine {
     private final ObjectMapper objectMapper;
 
     @Value("${scrapinvest.scraper.cache-ttl-hours:12}")
-    private long cacheTtlHours;
+    private long cacheTtlHours = 12L;
 
     @Value("${scrapinvest.scraper.timeout-ms:10000}")
-    private int timeoutMs;
+    private int timeoutMs = 10000;
 
-    @Value("${scrapinvest.scraper.user-agent}")
-    private String userAgent;
+    @Value("${scrapinvest.scraper.user-agent:Mozilla/5.0}")
+    private String userAgent = "Mozilla/5.0";
 
     public ScraperEngine(
             StockRepository stockRepository,
@@ -593,7 +594,7 @@ public class ScraperEngine {
             StockDetailResponse.FiiImoveisDadosDTO dadosImoveis) {
         try {
             return objectMapper.writeValueAsString(new StoredFundamentusPayload(indicadores, tabelas, composicaoAtivos, dadosImoveis));
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             log.warn("Erro ao serializar payload do Fundamentus: {}", e.getMessage());
             return "{}";
         }
@@ -605,7 +606,8 @@ public class ScraperEngine {
         }
         try {
             return objectMapper.readValue(json, new TypeReference<StoredFundamentusPayload>() {});
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
+            log.warn("Erro ao desserializar payload do Fundamentus em cache: {}", e.getMessage());
             return new StoredFundamentusPayload(Map.of(), List.of(), null, null);
         }
     }
@@ -676,7 +678,7 @@ public class ScraperEngine {
             String sanitized = raw.replaceAll("[^0-9-]", "").trim();
             if (sanitized.isEmpty() || "-".equals(sanitized)) return null;
             return Integer.parseInt(sanitized);
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             return null;
         }
     }

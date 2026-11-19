@@ -52,9 +52,8 @@ public class StockController {
     @GetMapping("/{ticker}/transactions")
     public ResponseEntity<List<TransactionResponse>> getStockTransactions(
             @PathVariable String ticker,
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam(required = false) UUID usuarioId) {
-        UUID effectiveId = userPrincipal != null ? userPrincipal.getId() : (usuarioId != null ? usuarioId : PortfolioService.DEFAULT_USER_ID);
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        UUID effectiveId = userPrincipal != null ? userPrincipal.getId() : PortfolioService.DEFAULT_USER_ID;
         return ResponseEntity.ok(portfolioService.listTransactionsByTicker(effectiveId, ticker));
     }
 }

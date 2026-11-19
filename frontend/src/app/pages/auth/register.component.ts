@@ -52,15 +52,15 @@ import { RegisterRequest } from '../../core/models/scrapinvest.models';
 
           <div class="space-y-3 pt-2">
             <div class="flex items-center gap-3 text-xs text-slate-700 dark:text-slate-300">
-              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✓</span>
+              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0"><span class="material-icons text-xs">check</span></span>
               <span>Sua carteira privada com dados salvos em banco PostgreSQL</span>
             </div>
             <div class="flex items-center gap-3 text-xs text-slate-700 dark:text-slate-300">
-              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✓</span>
+              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0"><span class="material-icons text-xs">check</span></span>
               <span>Cotações e scraping sob demanda integrados ao Fundamentus</span>
             </div>
             <div class="flex items-center gap-3 text-xs text-slate-700 dark:text-slate-300">
-              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✓</span>
+              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0"><span class="material-icons text-xs">check</span></span>
               <span>Demonstração instantânea disponível sem cadastro</span>
             </div>
           </div>

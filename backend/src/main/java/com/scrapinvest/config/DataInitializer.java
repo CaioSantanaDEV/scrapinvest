@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -41,101 +40,51 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // 1. Garante que o usuário demo existe com a senha demo123 válida
         User demoUser = userRepository.findById(PortfolioService.DEFAULT_USER_ID)
-                .orElseGet(() -> {
-                    User u = new User(
-                            PortfolioService.DEFAULT_USER_ID,
-                            "Investidor Convidado (Demo)",
-                            "demo@scrapinvest.com",
-                            passwordEncoder.encode("demo123")
-                    );
-                    return userRepository.save(u);
-                });
+                .orElseGet(() -> userRepository.save(new User(
+                        PortfolioService.DEFAULT_USER_ID,
+                        "Investidor Convidado (Demo)",
+                        "demo@scrapinvest.com",
+                        passwordEncoder.encode("demo123")
+                )));
 
-        // Atualiza a senha caso o hash tenha vindo de migração estática
         demoUser.setPasswordHash(passwordEncoder.encode("demo123"));
         userRepository.save(demoUser);
 
-        // 2. Garante que os ativos de demonstração estão presentes na conta demo
-        LocalDate dataPassada = LocalDate.now().minusMonths(6);
+        LocalDate baseDate = LocalDate.now().minusMonths(6);
+        seedDemoPositionIfMissing("PETR4", 100, "32.5000", baseDate, null, null);
+        seedDemoPositionIfMissing("WEGE3", 80, "48.0000", baseDate.plusMonths(1), null, null);
+        seedDemoPositionIfMissing("CDB-DI-100", 10, "1000.0000", baseDate.minusMonths(2), "CDI", new BigDecimal("100.0000"));
+        seedDemoPositionIfMissing("HGLG11", 25, "158.0000", baseDate.plusMonths(2), null, null);
 
-        if (!transactionRepository.existsByUsuarioIdAndTickerIgnoreCase(PortfolioService.DEFAULT_USER_ID, "PETR4")) {
-            log.info("Adicionando aporte de demonstração PETR4 para a conta demo...");
-            try {
-                scraperEngine.getOrScrapeStock("PETR4");
-            } catch (Exception e) {
-                log.warn("Não foi possível coletar PETR4 no Fundamentus: {}", e.getMessage());
-            }
-            transactionRepository.save(new Transaction(
-                    PortfolioService.DEFAULT_USER_ID,
-                    "PETR4",
-                    TransactionType.COMPRA,
-                    100,
-                    new BigDecimal("32.5000"),
-                    dataPassada,
-                    null,
-                    null
-            ));
+        log.info("Inicialização da conta de demonstração concluída.");
+    }
+
+    private void seedDemoPositionIfMissing(
+            String ticker,
+            int quantity,
+            String unitPrice,
+            LocalDate transactionDate,
+            String indexer,
+            BigDecimal contractedRate
+    ) {
+        if (transactionRepository.existsByUsuarioIdAndTickerIgnoreCase(PortfolioService.DEFAULT_USER_ID, ticker)) {
+            return;
         }
-
-        if (!transactionRepository.existsByUsuarioIdAndTickerIgnoreCase(PortfolioService.DEFAULT_USER_ID, "WEGE3")) {
-            log.info("Adicionando aporte de demonstração WEGE3 para a conta demo...");
-            try {
-                scraperEngine.getOrScrapeStock("WEGE3");
-            } catch (Exception e) {
-                log.warn("Não foi possível coletar WEGE3 no Fundamentus: {}", e.getMessage());
-            }
-            transactionRepository.save(new Transaction(
-                    PortfolioService.DEFAULT_USER_ID,
-                    "WEGE3",
-                    TransactionType.COMPRA,
-                    80,
-                    new BigDecimal("48.0000"),
-                    dataPassada.plusMonths(1),
-                    null,
-                    null
-            ));
+        try {
+            scraperEngine.getOrScrapeStock(ticker);
+        } catch (Exception ex) {
+            log.warn("Falha ao inicializar ativo de demonstração {}: {}", ticker, ex.getMessage());
         }
-
-        if (!transactionRepository.existsByUsuarioIdAndTickerIgnoreCase(PortfolioService.DEFAULT_USER_ID, "CDB-DI-100")) {
-            log.info("Adicionando título de Renda Fixa CDB-DI-100 para a conta demo...");
-            try {
-                scraperEngine.getOrScrapeStock("CDB-DI-100");
-            } catch (Exception e) {
-                log.warn("Não foi possível inicializar CDB-DI-100: {}", e.getMessage());
-            }
-            transactionRepository.save(new Transaction(
-                    PortfolioService.DEFAULT_USER_ID,
-                    "CDB-DI-100",
-                    TransactionType.COMPRA,
-                    10,
-                    new BigDecimal("1000.0000"),
-                    dataPassada.minusMonths(2),
-                    "CDI",
-                    new BigDecimal("100.0000")
-            ));
-        }
-
-        if (!transactionRepository.existsByUsuarioIdAndTickerIgnoreCase(PortfolioService.DEFAULT_USER_ID, "HGLG11")) {
-            log.info("Adicionando Fundo Imobiliário HGLG11 para a conta demo...");
-            try {
-                scraperEngine.getOrScrapeStock("HGLG11");
-            } catch (Exception e) {
-                log.warn("Não foi possível coletar HGLG11 no Fundamentus: {}", e.getMessage());
-            }
-            transactionRepository.save(new Transaction(
-                    PortfolioService.DEFAULT_USER_ID,
-                    "HGLG11",
-                    TransactionType.COMPRA,
-                    25,
-                    new BigDecimal("158.0000"),
-                    dataPassada.plusMonths(2),
-                    null,
-                    null
-            ));
-        }
-
-        log.info("Inicialização da conta de demonstração concluída!");
+        transactionRepository.save(new Transaction(
+                PortfolioService.DEFAULT_USER_ID,
+                ticker,
+                TransactionType.COMPRA,
+                quantity,
+                new BigDecimal(unitPrice),
+                transactionDate,
+                indexer,
+                contractedRate
+        ));
     }
 }

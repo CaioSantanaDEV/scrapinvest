@@ -25,9 +25,8 @@ public class PortfolioController {
 
     @GetMapping
     public ResponseEntity<PortfolioSummaryResponse> getConsolidatedPortfolio(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam(required = false) UUID usuarioId) {
-        UUID effectiveId = resolveUserId(userPrincipal, usuarioId);
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        UUID effectiveId = resolveAuthenticatedUserId(userPrincipal);
         return ResponseEntity.ok(portfolioService.consolidatePortfolio(effectiveId));
     }
 
@@ -35,7 +34,7 @@ public class PortfolioController {
     public ResponseEntity<TransactionResponse> createTransaction(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody TransactionRequest request) {
-        UUID effectiveId = resolveUserId(userPrincipal, request.usuarioId());
+        UUID effectiveId = resolveAuthenticatedUserId(userPrincipal);
         TransactionRequest securedRequest = new TransactionRequest(
                 effectiveId,
                 request.ticker(),
@@ -53,9 +52,8 @@ public class PortfolioController {
     @DeleteMapping("/transactions/{id}")
     public ResponseEntity<Void> deleteTransaction(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam(required = false) UUID usuarioId) {
-        UUID effectiveId = resolveUserId(userPrincipal, usuarioId);
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        UUID effectiveId = resolveAuthenticatedUserId(userPrincipal);
         portfolioService.deleteTransaction(id, effectiveId);
         return ResponseEntity.noContent().build();
     }
@@ -63,17 +61,16 @@ public class PortfolioController {
     @DeleteMapping("/positions/{ticker}")
     public ResponseEntity<Void> deletePositionByTicker(
             @PathVariable String ticker,
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam(required = false) UUID usuarioId) {
-        UUID effectiveId = resolveUserId(userPrincipal, usuarioId);
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        UUID effectiveId = resolveAuthenticatedUserId(userPrincipal);
         portfolioService.deletePositionByTicker(ticker, effectiveId);
         return ResponseEntity.noContent().build();
     }
 
-    private UUID resolveUserId(UserPrincipal userPrincipal, UUID fallbackId) {
+    private UUID resolveAuthenticatedUserId(UserPrincipal userPrincipal) {
         if (userPrincipal != null) {
             return userPrincipal.getId();
         }
-        return fallbackId != null ? fallbackId : PortfolioService.DEFAULT_USER_ID;
+        return PortfolioService.DEFAULT_USER_ID;
     }
 }
