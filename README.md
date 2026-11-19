@@ -73,7 +73,7 @@ flowchart TD
 
     subgraph Dados["Persistência & Fontes"]
         DB[(PostgreSQL - Supabase)]
-        Flyway["Flyway Migrations (V1..V7)"]
+        Flyway["Flyway Migrations"]
         Fonte["Fundamentus (HTTP Scraping)"]
     end
 
