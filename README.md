@@ -7,7 +7,7 @@
   <p>
     <a href="https://scrapinvest-lemon.vercel.app">Aplicação ao Vivo</a> |
     <a href="https://scrapinvest-backend.onrender.com/api/stocks/PETR4">API Backend</a> |
-    <a href="https://youtu.be/o_AyEzC66GQ">Vídeo de Demonstração</a>
+    <a href="https://www.youtube.com/watch?v=IUgk8t_on60">Vídeo de Demonstração</a>
   </p>
 </div>
 
